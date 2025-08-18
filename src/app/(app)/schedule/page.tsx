@@ -281,7 +281,11 @@ export default function SchedulePage() {
                             const needsVolunteer = eventAreaInfo && eventAreaInfo.volunteersNeeded > i;
                             
                             if (!needsVolunteer) {
-                                return <TableCell key={index} className="bg-muted/30" />;
+                                return (
+                                  <TableCell key={index} className="bg-muted/30 text-center">
+                                    <span className="text-xs text-muted-foreground italic">(Área não requerida)</span>
+                                  </TableCell>
+                                );
                             }
 
                             const scheduleKey = `${event.uniqueName} - ${area.name} - ${i + 1}`;
