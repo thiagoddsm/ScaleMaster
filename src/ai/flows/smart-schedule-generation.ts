@@ -5,7 +5,7 @@
  *
  * - smartScheduleGeneration - A function that handles the smart schedule generation process.
  * - SmartScheduleGenerationInput - The input type for the smartScheduleGeneration function.
- * - SmartScheduleGenerationOutput - The return type for the smartScheduleGeneration function.
+ * - SmartScheduleGenerationOutput - The return type for the smart-schedule-generation function.
  */
 
 import {ai} from '@/ai/genkit';
@@ -82,6 +82,7 @@ Consider the following constraints and guidelines when generating the schedule:
 *   If an area requires more than one volunteer (e.g., 3 volunteers for "Recepção"), you must generate 3 separate assignment objects for that area, with position numbers 1, 2, and 3 respectively, assigning a different volunteer to each.
 *   If a suitable volunteer is found, set the 'volunteer' field to their name and the 'reason' field to null.
 *   If a suitable volunteer is not found, you MUST set the 'volunteer' field to null and provide a clear 'reason' (e.g., "No volunteers available", "No one from the scheduled team is available").
+*   The 'reason' field must be a short, concise sentence explaining why no volunteer was assigned. It should not contain any of your own reasoning or thought process.
 *   If an event does not require a specific area, do NOT generate an assignment for it.
 
 Produce a list of assignments in the 'assignments' output field. Each assignment object in the list must have the following fields: eventUniqueName, area, position, volunteer, reason.
@@ -94,7 +95,7 @@ Example of a valid 'assignments' list:
 ]
 
 Ensure your output conforms to the requested JSON schema. The output must be a raw JSON object, without any markdown formatting.
-`, 
+`,
 });
 
 const smartScheduleGenerationFlow = ai.defineFlow(
