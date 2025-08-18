@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from 'react';
-import { PlusCircle, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -64,6 +64,7 @@ export default function EventsPage() {
   });
 
   const frequency = form.watch('frequency');
+  const selectedAreas = form.watch('areas');
 
   function handleAdd() {
     setSelectedEvent(null);
@@ -77,6 +78,19 @@ export default function EventsPage() {
     form.reset({...event, date: eventDate});
     setIsDialogOpen(true);
   }
+  
+  function handleDuplicate(event: Event) {
+    setSelectedEvent(null); // It's a new event, so no selectedEvent
+    const eventDate = event.date ? format(parseISO(event.date+'T00:00:00'), 'yyyy-MM-dd') : undefined;
+    form.reset({
+        ...event,
+        name: `${event.name} (Cópia)`,
+        id: undefined, // ensure it's treated as a new event
+        date: eventDate,
+    });
+    setIsDialogOpen(true);
+  }
+
 
   function handleDelete(event: Event) {
     setSelectedEvent(event);
@@ -128,6 +142,15 @@ export default function EventsPage() {
     setSelectedEvent(null);
     form.reset();
   }
+  
+  const handleSelectAllAreas = (checked: boolean) => {
+    if (checked) {
+        form.setValue('areas', areasOfService.map(a => a.name));
+    } else {
+        form.setValue('areas', []);
+    }
+  };
+
 
   return (
     <div className="space-y-8">
@@ -182,6 +205,9 @@ export default function EventsPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => handleEdit(event)}>
                           <Edit className="mr-2 h-4 w-4" /> Editar
+                        </DropdownMenuItem>
+                         <DropdownMenuItem onClick={() => handleDuplicate(event)}>
+                          <Copy className="mr-2 h-4 w-4" /> Duplicar
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleDelete(event)} className="text-destructive">
                           <Trash2 className="mr-2 h-4 w-4" /> Excluir
@@ -262,7 +288,19 @@ export default function EventsPage() {
               
               <FormField control={form.control} name="areas" render={() => (
                 <FormItem>
-                    <FormLabel>Áreas de Serviço Necessárias</FormLabel>
+                    <div className="flex items-center justify-between">
+                        <FormLabel>Áreas de Serviço Necessárias</FormLabel>
+                        <div className="flex items-center space-x-2">
+                           <Checkbox
+                             id="select-all-areas"
+                             checked={selectedAreas?.length === areasOfService.length}
+                             onCheckedChange={(checked) => handleSelectAllAreas(checked as boolean)}
+                           />
+                           <label htmlFor="select-all-areas" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                             Selecionar Todas
+                           </label>
+                        </div>
+                    </div>
                     <div className="space-y-2 p-2 border rounded-md max-h-40 overflow-y-auto">
                     {areasOfService.map((area) => (
                         <FormField key={area.name} control={form.control} name="areas" render={({ field }) => (
