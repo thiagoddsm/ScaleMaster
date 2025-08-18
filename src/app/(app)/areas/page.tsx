@@ -74,7 +74,11 @@ export default function AreasPage() {
       });
     } else {
       // Add
-      setAreas([...areas, data]);
+      if (areas.find(a => a.name.toLowerCase() === data.name.toLowerCase())) {
+        form.setError("name", { type: "manual", message: "Essa área de serviço já existe." });
+        return;
+      }
+      setAreas([...areas, data].sort((a,b) => a.name.localeCompare(b.name)));
        toast({
         title: "Sucesso!",
         description: "Nova área de serviço adicionada.",
