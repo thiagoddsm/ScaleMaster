@@ -17,7 +17,7 @@ import { ptBR } from 'date-fns/locale';
 
 import { smartScheduleGeneration } from '@/ai/flows/smart-schedule-generation';
 import { events as allEvents, volunteers, teamSchedules, areasOfService as allAreas, savedSchedules } from '@/lib/data';
-import type { GeneratedSchedule, MonthlyEvent, Volunteer, EventArea, SavedSchedule } from '@/lib/types';
+import type { GeneratedSchedule, MonthlyEvent, Volunteer, SavedSchedule } from '@/lib/types';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const scheduleSchema = z.object({
@@ -176,14 +176,22 @@ export default function SchedulePage() {
           areasOfService: JSON.stringify(allAreas.map(a => a.name)),
           specificArea: data.area !== 'all' ? data.area : undefined,
         });
-        
-        const generatedSchedule = result.schedule;
+
+        // Transform the array of assignments into the schedule map format
+        const generatedSchedule: GeneratedSchedule = {};
+        result.assignments.forEach(assignment => {
+            const key = `${assignment.eventUniqueName} - ${assignment.area} - ${assignment.position}`;
+            generatedSchedule[key] = {
+                volunteer: assignment.volunteer,
+                reason: assignment.reason,
+            };
+        });
         
         if (Object.keys(generatedSchedule).length === 0) {
              toast({
               variant: "default",
               title: "Nenhuma alocação necessária",
-              description: `Nenhum voluntário precisava ser alocado para a área de "${data.area}" neste mês.`,
+              description: data.area !== 'all' ? `Nenhum voluntário precisava ser alocado para a área de "${data.area}" neste mês.` : "Nenhuma alocação foi necessária para o período selecionado.",
             });
         } else {
             toast({
@@ -329,6 +337,7 @@ export default function SchedulePage() {
                             
                             return (
                             <TableCell key={index} className="text-center">
+                                {scheduleSlot ? (
                                 <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" className="h-auto p-1 text-left font-normal w-full justify-center flex-col">
@@ -355,6 +364,12 @@ export default function SchedulePage() {
                                     ))}
                                 </DropdownMenuContent>
                                 </DropdownMenu>
+                                ) : (
+                                    <div className="flex-col">
+                                        <span className='text-muted-foreground italic'>Não alocado</span>
+                                        <span className="text-xs text-muted-foreground italic block">(Não foi possível alocar)</span>
+                                    </div>
+                                )}
                             </TableCell>
                             );
                         })}
