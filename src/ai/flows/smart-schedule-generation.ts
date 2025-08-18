@@ -24,8 +24,13 @@ const SmartScheduleGenerationInputSchema = z.object({
 });
 export type SmartScheduleGenerationInput = z.infer<typeof SmartScheduleGenerationInputSchema>;
 
+const ScheduleSlotSchema = z.object({
+    volunteer: z.string().nullable().describe("The name of the assigned volunteer, or null if no one was assigned."),
+    reason: z.string().nullable().describe("The reason for not assigning a volunteer, or null if a volunteer was assigned."),
+});
+
 const SmartScheduleGenerationOutputSchema = z.object({
-  schedule: z.string().describe('JSON string of the generated schedule. The key is "[Event Name] - [Area of Service] - [Position Number]". The value is an object with "volunteer" (string or null) and "reason" (string or null for why it was not assigned).'),
+  schedule: z.record(z.string(), ScheduleSlotSchema).describe('An object representing the generated schedule. The key is "[Event Name] - [Area of Service] - [Position Number]". The value is an object with "volunteer" and "reason" fields.'),
 });
 export type SmartScheduleGenerationOutput = z.infer<typeof SmartScheduleGenerationOutputSchema>;
 
@@ -39,7 +44,7 @@ const prompt = ai.definePrompt({
   output: {schema: SmartScheduleGenerationOutputSchema},
   prompt: `You are an AI scheduling assistant tasked with generating an optimal volunteer schedule for a set of events.
 
-You will be provided with data about events, volunteers, and team schedules. Your goal is to produce a JSON schedule that assigns the best-suited volunteer to each event, area of service, and required position.
+You will be provided with data about events, volunteers, and team schedules. Your goal is to produce a structured JSON object that assigns the best-suited volunteer to each event, area of service, and required position.
 {{#if specificArea}}
 You will generate the schedule ONLY for the following area: {{{specificArea}}}.
 {{else}}
@@ -75,19 +80,20 @@ Consider the following constraints and guidelines when generating the schedule:
 *   If an area requires more than one volunteer, you must assign different volunteers to each position.
 *   If a volunteer is not available or no suitable volunteer is found, you MUST provide a reason. Set the 'volunteer' field to null and the 'reason' field to a brief explanation (e.g., "No volunteers available", "No one from the scheduled team is available", "Event does not require this area").
 
-Produce the schedule in JSON format. The JSON should have the following structure where the key includes the event name, area, and position number (from 1 to N, where N is the number of volunteers needed).
+Produce the schedule as a structured JSON object. The object keys should be a string in the format "[Event Name] - [Area of Service] - [Position Number]" (e.g., "Sunday Service - Sound - 1").
+The value for each key must be an object with two properties: "volunteer" (string or null) and "reason" (string or null).
 
-The value for each key must be an object: { "volunteer": "[Volunteer Name]" | null, "reason": "[Reason for no assignment]" | null }.
-
-Example:
+Example of a valid output object:
 
 {
-  "Sunday Service - Sound - 1": { "volunteer": "John Doe", "reason": null },
-  "Sunday Service - Reception - 1": { "volunteer": "Jane Smith", "reason": null },
-  "Sunday Service - Reception - 2": { "volunteer": null, "reason": "No available volunteers" }
+  "schedule": {
+    "Sunday Service - Sound - 1": { "volunteer": "John Doe", "reason": null },
+    "Sunday Service - Reception - 1": { "volunteer": "Jane Smith", "reason": null },
+    "Sunday Service - Reception - 2": { "volunteer": null, "reason": "No available volunteers" }
+  }
 }
 
-Ensure the JSON is valid and parsable.
+Ensure your output conforms to the requested JSON schema.
 `, 
 });
 

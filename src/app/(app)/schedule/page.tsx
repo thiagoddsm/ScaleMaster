@@ -177,7 +177,7 @@ export default function SchedulePage() {
           specificArea: data.area !== 'all' ? data.area : undefined,
         });
         
-        const generatedSchedule = JSON.parse(result.schedule);
+        const generatedSchedule = result.schedule;
         
         if (Object.keys(generatedSchedule).length === 0) {
              toast({
