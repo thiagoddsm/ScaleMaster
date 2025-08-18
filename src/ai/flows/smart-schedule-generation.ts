@@ -65,7 +65,9 @@ Teams Schedule Data:
 All Possible Areas of Service:
 {{{areasOfService}}}
 
-Your task is to generate assignments for all areas listed in the 'All Possible Areas of Service' data. However, if a 'specificArea' is provided below, you MUST generate the schedule ONLY for that specific area.
+Your task is to generate assignments for all event positions.
+- By default, you should generate assignments for every area listed in the 'All Possible Areas of Service' data.
+- However, if a 'specificArea' is provided below, you MUST generate the schedule ONLY for that specific area.
 {{#if specificArea}}
 Specific Area to schedule: {{{specificArea}}}
 {{/if}}
