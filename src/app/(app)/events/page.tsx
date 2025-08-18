@@ -1,0 +1,257 @@
+"use client"
+
+import React, { useState } from 'react';
+import { PlusCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useToast } from '@/hooks/use-toast';
+import { events as initialEvents, areasOfService } from '@/lib/data';
+import type { Event } from '@/lib/types';
+import { Textarea } from '@/components/ui/textarea';
+import { format } from 'date-fns';
+
+const eventSchema = z.object({
+  name: z.string().min(1, "Nome é obrigatório"),
+  frequency: z.enum(['Semanal', 'Pontual']),
+  dayOfWeek: z.string().optional(),
+  date: z.string().optional(),
+  time: z.string().min(1, "Horário é obrigatório"),
+  areas: z.array(z.string()).min(1, "Selecione ao menos uma área"),
+  responsible: z.string().optional(),
+  contact: z.string().optional(),
+  observations: z.string().optional(),
+}).refine(data => {
+    if (data.frequency === 'Semanal') return !!data.dayOfWeek;
+    return true;
+}, {
+    message: "Dia da semana é obrigatório para eventos semanais",
+    path: ["dayOfWeek"],
+}).refine(data => {
+    if (data.frequency === 'Pontual') return !!data.date;
+    return true;
+}, {
+    message: "Data é obrigatória para eventos pontuais",
+    path: ["date"],
+});
+
+
+const weekDays = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
+
+export default function EventsPage() {
+  const [events, setEvents] = useState<Event[]>(initialEvents);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { toast } = useToast();
+
+  const form = useForm<z.infer<typeof eventSchema>>({
+    resolver: zodResolver(eventSchema),
+    defaultValues: {
+      name: '',
+      frequency: 'Semanal',
+      time: '',
+      areas: [],
+    },
+  });
+
+  const frequency = form.watch('frequency');
+
+  function onSubmit(data: z.infer<typeof eventSchema>) {
+    const newEvent: Event = {
+      id: (events.length + 1).toString(),
+      ...data,
+      date: data.date ? format(new Date(data.date), 'yyyy-MM-dd') : undefined,
+    };
+    setEvents([...events, newEvent]);
+    toast({
+      title: "Sucesso!",
+      description: "Novo evento adicionado.",
+      className: "bg-primary text-primary-foreground",
+    });
+    setIsDialogOpen(false);
+    form.reset();
+  }
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">Gerenciar Eventos</h1>
+        <p className="text-muted-foreground">Adicione, visualize e gerencie os eventos fixos e pontuais.</p>
+      </div>
+
+      <Card>
+        <CardHeader className="flex-row items-center justify-between">
+          <div>
+            <CardTitle>Lista de Eventos</CardTitle>
+            <CardDescription>Todos os eventos cadastrados no sistema.</CardDescription>
+          </div>
+          <Button onClick={() => setIsDialogOpen(true)}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Adicionar Evento
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Frequência</TableHead>
+                <TableHead>Detalhes</TableHead>
+                <TableHead>Áreas de Serviço</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {events.map((event) => (
+                <TableRow key={event.id}>
+                  <TableCell className="font-medium">{event.name}</TableCell>
+                  <TableCell><Badge variant={event.frequency === 'Semanal' ? 'default' : 'secondary'}>{event.frequency}</Badge></TableCell>
+                  <TableCell>
+                    {event.frequency === 'Semanal' ? event.dayOfWeek : event.date ? format(new Date(event.date), 'dd/MM/yyyy') : ''} às {event.time}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {event.areas.map(area => <Badge key={area} variant="outline">{area}</Badge>)}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[625px]">
+          <DialogHeader>
+            <DialogTitle>Adicionar Novo Evento</DialogTitle>
+            <DialogDescription>Preencha os dados do novo evento.</DialogDescription>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField control={form.control} name="name" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome do Evento</FormLabel>
+                    <FormControl><Input placeholder="Ex: Culto de Domingo" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="time" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Horário</FormLabel>
+                    <FormControl><Input type="time" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+              </div>
+
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField control={form.control} name="frequency" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Frequência</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl><SelectTrigger><SelectValue placeholder="Selecione a frequência" /></SelectTrigger></FormControl>
+                      <SelectContent>
+                        <SelectItem value="Semanal">Semanal</SelectItem>
+                        <SelectItem value="Pontual">Pontual</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                {frequency === 'Semanal' && (
+                  <FormField control={form.control} name="dayOfWeek" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Dia da Semana</FormLabel>
+                       <Select onValueChange={field.onChange} defaultValue={field.value}>
+                         <FormControl><SelectTrigger><SelectValue placeholder="Selecione o dia" /></SelectTrigger></FormControl>
+                         <SelectContent>
+                           {weekDays.map(day => <SelectItem key={day} value={day}>{day}</SelectItem>)}
+                         </SelectContent>
+                       </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                )}
+                {frequency === 'Pontual' && (
+                  <FormField control={form.control} name="date" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Data</FormLabel>
+                      <FormControl><Input type="date" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                )}
+              </div>
+              
+              <FormField control={form.control} name="areas" render={() => (
+                <FormItem>
+                    <FormLabel>Áreas de Serviço Necessárias</FormLabel>
+                    <div className="space-y-2 p-2 border rounded-md max-h-40 overflow-y-auto">
+                    {areasOfService.map((area) => (
+                        <FormField key={area.name} control={form.control} name="areas" render={({ field }) => (
+                        <FormItem key={area.name} className="flex flex-row items-start space-x-3 space-y-0">
+                            <FormControl>
+                            <Checkbox
+                                checked={field.value?.includes(area.name)}
+                                onCheckedChange={(checked) => {
+                                return checked
+                                    ? field.onChange([...field.value, area.name])
+                                    : field.onChange(field.value?.filter((value) => value !== area.name));
+                                }}
+                            />
+                            </FormControl>
+                            <FormLabel className="font-normal">{area.name}</FormLabel>
+                        </FormItem>
+                        )} />
+                    ))}
+                    </div>
+                    <FormMessage />
+                </FormItem>
+              )} />
+              
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField control={form.control} name="responsible" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Responsável</FormLabel>
+                      <FormControl><Input placeholder="Nome do responsável" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="contact" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Contato</FormLabel>
+                      <FormControl><Input placeholder="Telefone ou email" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+              </div>
+              
+              <FormField control={form.control} name="observations" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Observações</FormLabel>
+                      <FormControl><Textarea placeholder="Alguma observação sobre o evento?" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+
+
+              <DialogFooter>
+                <DialogClose asChild><Button type="button" variant="secondary">Cancelar</Button></DialogClose>
+                <Button type="submit">Salvar Evento</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
