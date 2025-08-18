@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Save } from 'lucide-react';
-import { getDaysInMonth, startOfMonth, format, parseISO, set } from 'date-fns';
+import { getDaysInMonth, set, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import { smartScheduleGeneration } from '@/ai/flows/smart-schedule-generation';
@@ -53,8 +53,9 @@ const getEventsForMonth = (month: number, year: number): MonthlyEvent[] => {
           eventHappensToday = true;
         }
       } else if (event.frequency === 'Pontual' && event.date) {
-        const eventDate = parseISO(event.date); // Already in local time
-        if (eventDate.getDate() === day && eventDate.getMonth() === month - 1 && eventDate.getFullYear() === year) {
+        // Correctly parse the event date string 'YYYY-MM-DD'
+        const [eventYear, eventMonth, eventDay] = event.date.split('-').map(Number);
+        if (eventDay === day && eventMonth === month && eventYear === year) {
           eventHappensToday = true;
         }
       }
