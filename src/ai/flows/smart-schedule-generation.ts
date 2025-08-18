@@ -43,59 +43,44 @@ const prompt = ai.definePrompt({
   name: 'smartScheduleGenerationPrompt',
   input: {schema: SmartScheduleGenerationInputSchema},
   output: {schema: SmartScheduleGenerationOutputSchema},
-  prompt: `You are an AI scheduling assistant tasked with generating an optimal volunteer schedule for a set of events.
+  prompt: `You are an AI assistant that generates a volunteer schedule for events. Your task is to create a list of assignment objects based on the provided data.
 
-You will be provided with data about events, volunteers, and team schedules. Your goal is to produce a list of assignment objects, where each object represents a specific volunteer assigned to a specific role in an event.
+Here is the data you will use:
+- Month: {{{month}}}/{{{year}}}
+- Events Data: {{{eventsData}}} (A list of all events happening this month)
+- Volunteers Data: {{{volunteersData}}} (A list of all volunteers and their details)
+- Teams Schedule Data: {{{teamsScheduleData}}} (The rotation schedule for the teams)
+- All Possible Areas of Service: {{{areasOfService}}}
 
-Here is the information you will be working with:
+**Your Goal:**
+Generate a complete list of assignments for all required positions in all events.
 
-Month: {{{month}}}
-Year: {{{year}}}
+**Follow these rules precisely:**
 
-Events Data (uniqueName is the key for each event):
-{{{eventsData}}}
-Each event in the data contains a list of areas and the number of volunteers needed for each area.
+1.  **One Assignment per Slot:** For every single volunteer position required at every event, you MUST create one assignment object.
+    - Example: If "Recepção" needs 3 volunteers, you must create 3 separate assignment objects for that area in that event, with \`position\` numbers 1, 2, and 3.
 
-Volunteers Data:
-{{{volunteersData}}}
+2.  **Check All Constraints Before Assigning:** To assign a volunteer, ALL of the following must be true:
+    a.  **Availability:** The volunteer's \`availability\` array must include the name of the event.
+    b.  **Area Qualification:** The volunteer's \`areas\` array must include the area of service for the assignment.
+    c.  **Team on Duty:** The event's date must fall within the date range for the volunteer's assigned \`team\` according to the \`teamsScheduleData\`.
+    d.  **No Double Booking:** A volunteer cannot be assigned to more than one position in the SAME event.
 
-Teams Schedule Data:
-{{{teamsScheduleData}}}
+3.  **Assignment Logic:**
+    - **Successful Assignment:** If you find a volunteer who meets ALL the constraints (2a, 2b, 2c, 2d), set their name in the \`volunteer\` field and set the \`reason\` field to \`null\`.
+    - **Failed Assignment:** If NO volunteer can be found who meets all the constraints for a specific slot, you MUST set the \`volunteer\` field to \`null\` and provide a concise, one-sentence \`reason\`.
+        - Examples for \`reason\`: "No volunteers available for this area.", "No available volunteers from the scheduled team.", "All qualified volunteers are already assigned."
 
-All Possible Areas of Service:
-{{{areasOfService}}}
+4.  **Filtering by Specific Area:**
+    - If the \`specificArea\` field is provided, you MUST ONLY generate assignments for that single area of service across all events.
+    - If \`specificArea\` is NOT provided, you MUST generate assignments for ALL areas listed in \`areasOfService\` that are required by the events.
 
-Your task is to generate assignments for all event positions.
-- By default, you should generate assignments for every area listed in the 'All Possible Areas of Service' data.
-- However, if a 'specificArea' is provided below, you MUST generate the schedule ONLY for that specific area.
-{{#if specificArea}}
-Specific Area to schedule: {{{specificArea}}}
-{{/if}}
+5.  **Output Format:**
+    - The final output must be a raw JSON object conforming to the schema.
+    - Do NOT include markdown formatting, comments, or any text outside the JSON structure.
+    - The \`reason\` field must be a short, direct sentence and MUST NOT contain your own thought process or reasoning.
 
-Consider the following constraints and guidelines when generating the schedule:
-
-*   For every position required in every event, you must generate one assignment object.
-*   Volunteers should only be assigned to events for which they have indicated availability.
-*   Volunteers should only be assigned to areas of service in which they are qualified.
-*   If team schedules are provided, volunteers should primarily be assigned to events that fall within their team's scheduled dates.
-*   Attempt to distribute assignments evenly among volunteers to avoid overburdening any single individual.
-*   A single volunteer cannot be assigned to two different positions in the same event.
-*   If an area requires more than one volunteer (e.g., 3 volunteers for "Recepção"), you must generate 3 separate assignment objects for that area, with position numbers 1, 2, and 3 respectively, assigning a different volunteer to each.
-*   If a suitable volunteer is found, set the 'volunteer' field to their name and the 'reason' field to null.
-*   If a suitable volunteer is not found, you MUST set the 'volunteer' field to null and provide a clear 'reason' (e.g., "No volunteers available", "No one from the scheduled team is available").
-*   The 'reason' field must be a short, concise sentence explaining why no volunteer was assigned. It should not contain any of your own reasoning or thought process.
-*   If an event does not require a specific area, do NOT generate an assignment for it.
-
-Produce a list of assignments in the 'assignments' output field. Each assignment object in the list must have the following fields: eventUniqueName, area, position, volunteer, reason.
-
-Example of a valid 'assignments' list:
-[
-  { "eventUniqueName": "Sunday Service - 07/07", "area": "Sound", "position": 1, "volunteer": "John Doe", "reason": null },
-  { "eventUniqueName": "Sunday Service - 07/07", "area": "Reception", "position": 1, "volunteer": "Jane Smith", "reason": null },
-  { "eventUniqueName": "Sunday Service - 07/07", "area": "Reception", "position": 2, "volunteer": null, "reason": "No available volunteers" }
-]
-
-Ensure your output conforms to the requested JSON schema. The output must be a raw JSON object, without any markdown formatting.
+Create the \`assignments\` list now based on these rules.
 `,
 });
 
