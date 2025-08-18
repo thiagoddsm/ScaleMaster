@@ -51,7 +51,6 @@ const getEventsForMonth = (month: number, year: number): MonthlyEvent[] => {
           eventHappensToday = true;
         }
       } else if (event.frequency === 'Pontual' && event.date) {
-        // Use parse to avoid timezone issues, treat date as local
         const eventDate = parse(event.date, 'yyyy-MM-dd', new Date());
         if (eventDate.getDate() === day && eventDate.getMonth() === (month - 1) && eventDate.getFullYear() === year) {
           eventHappensToday = true;
@@ -333,7 +332,7 @@ export default function SchedulePage() {
 
                             const scheduleKey = `${event.uniqueName} - ${area.name} - ${i + 1}`;
                             const scheduleSlot = schedule[scheduleKey];
-                            const volunteerName = scheduleSlot?.volunteer;
+                            const volunteerName = scheduleSlot?.volunteer?.replace(/,$/, '');
                             const reason = scheduleSlot?.reason;
                             const eligibleVolunteers = getEligibleVolunteers(area.name);
                             
