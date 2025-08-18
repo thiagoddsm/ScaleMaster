@@ -22,6 +22,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 
 
 const availabilityItems = Array.from(new Set(events.map(e => e.name)));
+const allTeams = [...teams.map(t => t.name), "N/A"];
+
 
 const volunteerSchema = z.object({
   id: z.string().optional(),
@@ -73,6 +75,20 @@ export default function VolunteersPage() {
         setSelectedVolunteer(null);
     }
   }
+
+  function handleTeamChange(volunteerId: string, newTeam: string) {
+    setVolunteers(prevVolunteers => 
+      prevVolunteers.map(v => 
+        v.id === volunteerId ? { ...v, team: newTeam } : v
+      )
+    );
+    const volunteer = volunteers.find(v => v.id === volunteerId);
+    toast({
+        title: "Equipe Atualizada",
+        description: `${volunteer?.name} agora está na equipe ${newTeam}.`
+    });
+  }
+
 
   function onSubmit(data: z.infer<typeof volunteerSchema>) {
     if (selectedVolunteer) {
@@ -136,7 +152,28 @@ export default function VolunteersPage() {
               {volunteers.map((volunteer) => (
                 <TableRow key={volunteer.id}>
                   <TableCell className="font-medium">{volunteer.name}</TableCell>
-                  <TableCell>{volunteer.team}</TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-auto p-1 text-left font-normal">
+                          <Badge variant={volunteer.team === 'N/A' ? 'outline' : 'default'} className="cursor-pointer">
+                            {volunteer.team}
+                          </Badge>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start">
+                        {allTeams.map(teamName => (
+                           <DropdownMenuItem 
+                              key={teamName} 
+                              onClick={() => handleTeamChange(volunteer.id, teamName)}
+                              disabled={volunteer.team === teamName}
+                            >
+                            {teamName}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1 max-w-xs">
                       {volunteer.areas.map(area => <Badge key={area} variant="secondary">{area}</Badge>)}
@@ -200,7 +237,7 @@ export default function VolunteersPage() {
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecione uma equipe" /></SelectTrigger></FormControl>
                       <SelectContent>
-                        {teams.map(team => <SelectItem key={team.name} value={team.name}>{team.name}</SelectItem>)}
+                        {allTeams.map(team => <SelectItem key={team} value={team}>{team}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <FormMessage />

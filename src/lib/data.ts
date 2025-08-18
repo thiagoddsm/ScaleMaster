@@ -1,29 +1,29 @@
 import type { Volunteer, Event, Team, TeamSchedule, AreaOfService } from './types';
 
 export const areasOfService: AreaOfService[] = [
-    { "name": "Apoio" },
-    { "name": "Bistro" },
-    { "name": "Boutique" },
-    { "name": "Broadcasting" },
-    { "name": "Cleaning" },
-    { "name": "Coffee Break" },
-    { "name": "Coordenação de culto" },
-    { "name": "Coordenação técnica" },
-    { "name": "DIS" },
-    { "name": "Espaço Vip" },
-    { "name": "Estacionamento" },
-    { "name": "Fotografia" },
-    { "name": "Iluminação" },
-    { "name": "Live" },
-    { "name": "Musikids" },
-    { "name": "Projeção" },
-    { "name": "Recepção" },
-    { "name": "Saúde" },
-    { "name": "Security" },
-    { "name": "Som" },
-    { "name": "Staff" },
-    { "name": "Stories" }
-];
+    { name: "Apoio" },
+    { name: "Bistro" },
+    { name: "Boutique" },
+    { name: "Broadcasting" },
+    { name: "Cleaning" },
+    { name: "Coffee Break" },
+    { name: "Coordenação de culto" },
+    { name: "Coordenação técnica" },
+    { name: "DIS" },
+    { name: "Espaço Vip" },
+    { name: "Estacionamento" },
+    { name: "Fotografia" },
+    { name: "Iluminação" },
+    { name: "Live" },
+    { name: "Musikids" },
+    { name: "Projeção" },
+    { name: "Recepção" },
+    { name: "Saúde" },
+    { name: "Security" },
+    { name: "Som" },
+    { name: "Staff" },
+    { name: "Stories" }
+].sort((a, b) => a.name.localeCompare(b.name));
 
 export const teams: Team[] = [
   { name: 'Alpha' },
