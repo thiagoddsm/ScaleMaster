@@ -17,7 +17,7 @@ const SmartScheduleGenerationInputSchema = z.object({
   eventsData: z.string().describe('JSON string of events data, each event containing name, areas with volunteers needed, and date.'),
   volunteersData: z.string().describe('JSON string of volunteers data, each volunteer containing name, areas, availability, and team.'),
   teamsScheduleData: z.string().describe('JSON string of teams schedule data, assigning teams to date ranges.'),
-  areasOfService: z.string().describe('JSON string of areas of service.'),
+  areasOfService: z.string().describe('JSON string of all possible areas of service.'),
   specificArea: z.string().optional().describe('An optional specific area of service to generate the schedule for. If not provided, generate for all areas.'),
 });
 export type SmartScheduleGenerationInput = z.infer<typeof SmartScheduleGenerationInputSchema>;
@@ -47,12 +47,6 @@ const prompt = ai.definePrompt({
 
 You will be provided with data about events, volunteers, and team schedules. Your goal is to produce a list of assignment objects, where each object represents a specific volunteer assigned to a specific role in an event.
 
-{{#if specificArea}}
-You will generate the schedule ONLY for the following area: {{{specificArea}}}.
-{{else}}
-You will generate the schedule for all areas listed in the areas of service data.
-{{/if}}
-
 Here is the information you will be working with:
 
 Month: {{{month}}}
@@ -68,8 +62,13 @@ Volunteers Data:
 Teams Schedule Data:
 {{{teamsScheduleData}}}
 
-Areas of Service:
+All Possible Areas of Service:
 {{{areasOfService}}}
+
+Your task is to generate assignments for all areas listed in the 'All Possible Areas of Service' data. However, if a 'specificArea' is provided below, you MUST generate the schedule ONLY for that specific area.
+{{#if specificArea}}
+Specific Area to schedule: {{{specificArea}}}
+{{/if}}
 
 Consider the following constraints and guidelines when generating the schedule:
 
