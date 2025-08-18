@@ -41,6 +41,10 @@ export default function VolunteersPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [teamFilter, setTeamFilter] = useState("all");
+  const [areaFilter, setAreaFilter] = useState("all");
+  const [availabilityFilter, setAvailabilityFilter] = useState("all");
+
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof volunteerSchema>>({
@@ -119,9 +123,13 @@ export default function VolunteersPage() {
     form.reset();
   }
 
-  const filteredVolunteers = volunteers.filter(volunteer =>
-    volunteer.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredVolunteers = volunteers.filter(volunteer => {
+    const nameMatch = volunteer.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const teamMatch = teamFilter === 'all' || volunteer.team === teamFilter;
+    const areaMatch = areaFilter === 'all' || volunteer.areas.includes(areaFilter);
+    const availabilityMatch = availabilityFilter === 'all' || volunteer.availability.includes(availabilityFilter);
+    return nameMatch && teamMatch && areaMatch && availabilityMatch;
+  });
   
   return (
     <div className="space-y-8">
@@ -153,6 +161,35 @@ export default function VolunteersPage() {
                         Adicionar Voluntário
                     </Button>
                 </div>
+            </div>
+            <div className="flex flex-col md:flex-row gap-4 mt-4">
+              <Select value={teamFilter} onValueChange={setTeamFilter}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                  <SelectValue placeholder="Filtrar por Equipe" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as Equipes</SelectItem>
+                  {allTeams.map(team => <SelectItem key={team} value={team}>{team}</SelectItem>)}
+                </SelectContent>
+              </Select>
+               <Select value={areaFilter} onValueChange={setAreaFilter}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                  <SelectValue placeholder="Filtrar por Área" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as Áreas</SelectItem>
+                  {areasOfService.map(area => <SelectItem key={area.name} value={area.name}>{area.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+               <Select value={availabilityFilter} onValueChange={setAvailabilityFilter}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                  <SelectValue placeholder="Filtrar por Disponibilidade" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as Disponibilidades</SelectItem>
+                  {availabilityItems.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
         </CardHeader>
         <CardContent>
