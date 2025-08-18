@@ -93,3 +93,4 @@ const smartScheduleGenerationFlow = ai.defineFlow(
     return output!;
   }
 );
+
