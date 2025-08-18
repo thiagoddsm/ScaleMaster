@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import { PlusCircle, Trash2, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
@@ -16,9 +16,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
-export default function AreaDetailPage({ params }: { params: { name: string } }) {
+export default function AreaDetailPage() {
+  const params = useParams();
   const { toast } = useToast();
-  const areaName = decodeURIComponent(params.name);
+  const areaName = decodeURIComponent(params.name as string);
 
   // Using states to manage data, allowing for modifications
   const [area, setArea] = useState<AreaOfService | undefined>(() => allAreas.find(a => a.name === areaName));
