@@ -20,6 +20,7 @@ const SmartScheduleGenerationInputSchema = z.object({
   volunteersData: z.string().describe('JSON string of volunteers data, each volunteer containing name, areas, availability, and team.'),
   teamsScheduleData: z.string().describe('JSON string of teams schedule data, assigning teams to date ranges.'),
   areasOfService: z.string().describe('JSON string of areas of service.'),
+  specificArea: z.string().optional().describe('An optional specific area of service to generate the schedule for. If not provided, generate for all areas.'),
 });
 export type SmartScheduleGenerationInput = z.infer<typeof SmartScheduleGenerationInputSchema>;
 
@@ -39,6 +40,12 @@ const prompt = ai.definePrompt({
   prompt: `You are an AI scheduling assistant tasked with generating an optimal volunteer schedule for a set of events.
 
 You will be provided with data about events, volunteers, and team schedules. Your goal is to produce a JSON schedule that assigns the best-suited volunteer to each event and area of service.
+{{#if specificArea}}
+You will generate the schedule ONLY for the following area: {{{specificArea}}}.
+{{else}}
+You will generate the schedule for all areas listed in the areas of service data.
+{{/if}}
+
 
 Here is the information you will be working with:
 
@@ -93,4 +100,3 @@ const smartScheduleGenerationFlow = ai.defineFlow(
     return output!;
   }
 );
-

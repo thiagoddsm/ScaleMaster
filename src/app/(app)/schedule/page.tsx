@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useTransition, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -16,13 +16,14 @@ import { getDaysInMonth, startOfMonth, format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import { smartScheduleGeneration } from '@/ai/flows/smart-schedule-generation';
-import { events as allEvents, volunteers, teamSchedules, areasOfService } from '@/lib/data';
-import type { GeneratedSchedule, MonthlyEvent } from '@/lib/types';
-
+import { events as allEvents, volunteers, teamSchedules, areasOfService as allAreas } from '@/lib/data';
+import type { GeneratedSchedule, MonthlyEvent, Volunteer } from '@/lib/types';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const scheduleSchema = z.object({
   month: z.string().min(1, "Mês é obrigatório"),
   year: z.string().min(4, "Ano inválido").max(4, "Ano inválido"),
+  area: z.string().optional(),
 });
 
 const months = Array.from({ length: 12 }, (_, i) => ({
@@ -82,8 +83,37 @@ export default function SchedulePage() {
     defaultValues: {
       month: (new Date().getMonth() + 1).toString(),
       year: new Date().getFullYear().toString(),
+      area: 'all',
     },
   });
+
+  const selectedArea = form.watch('area');
+
+  const areasForTable = useMemo(() => {
+    if (selectedArea && selectedArea !== 'all') {
+      return allAreas.filter(a => a.name === selectedArea);
+    }
+    return allAreas;
+  }, [selectedArea]);
+
+  const getEligibleVolunteers = (areaName: string): Volunteer[] => {
+    return volunteers
+      .filter(v => v.areas.includes(areaName))
+      .sort((a,b) => a.name.localeCompare(b.name));
+  };
+
+  const handleManualChange = (scheduleKey: string, volunteerName: string | null) => {
+    setSchedule(prev => {
+        if (!prev) return null;
+        const newSchedule = {...prev};
+        if (volunteerName === null) {
+            newSchedule[scheduleKey] = ''; // Set to empty or some placeholder for 'unassigned'
+        } else {
+            newSchedule[scheduleKey] = volunteerName;
+        }
+        return newSchedule;
+    });
+  };
   
   function onSubmit(data: z.infer<typeof scheduleSchema>) {
     setSchedule(null);
@@ -112,16 +142,26 @@ export default function SchedulePage() {
           eventsData,
           volunteersData: JSON.stringify(volunteers),
           teamsScheduleData: JSON.stringify(teamSchedules),
-          areasOfService: JSON.stringify(areasOfService.map(a => a.name))
+          areasOfService: JSON.stringify(allAreas.map(a => a.name)),
+          specificArea: data.area !== 'all' ? data.area : undefined,
         });
         
         const generatedSchedule = JSON.parse(result.schedule);
+        
+        if (Object.keys(generatedSchedule).length === 0) {
+             toast({
+              variant: "default",
+              title: "Nenhuma alocação necessária",
+              description: `Nenhum voluntário precisava ser alocado para a área de "${data.area}" neste mês.`,
+            });
+        } else {
+            toast({
+              title: "Escala Gerada!",
+              description: "A escala inteligente foi gerada com sucesso.",
+              className: "bg-primary text-primary-foreground",
+            });
+        }
         setSchedule(generatedSchedule);
-        toast({
-          title: "Escala Gerada!",
-          description: "A escala inteligente foi gerada com sucesso.",
-          className: "bg-primary text-primary-foreground",
-        });
 
       } catch (error) {
         console.error(error);
@@ -138,13 +178,13 @@ export default function SchedulePage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-foreground">Gerar Escala Inteligente</h1>
-        <p className="text-muted-foreground">Selecione o mês e o ano para gerar uma nova escala otimizada.</p>
+        <p className="text-muted-foreground">Selecione o período e a área para gerar uma nova escala otimizada.</p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Seleção de Período</CardTitle>
-          <CardDescription>Escolha o mês e o ano para a escala.</CardDescription>
+          <CardTitle>Seleção de Período e Área</CardTitle>
+          <CardDescription>Escolha o mês, o ano e a área para a escala.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -165,6 +205,19 @@ export default function SchedulePage() {
                 <FormItem className="w-full md:w-auto md:flex-1">
                   <FormLabel>Ano</FormLabel>
                   <FormControl><Input type="number" placeholder="AAAA" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="area" render={({ field }) => (
+                <FormItem className="w-full md:w-auto md:flex-1">
+                  <FormLabel>Área de Serviço</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Selecione a área" /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      <SelectItem value="all">Todas as Áreas</SelectItem>
+                      {allAreas.map(a => <SelectItem key={a.name} value={a.name}>{a.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )} />
@@ -189,7 +242,7 @@ export default function SchedulePage() {
           <CardHeader>
             <CardTitle>Escala Gerada</CardTitle>
             <CardDescription>
-              Escala de {months.find(m => m.value === form.getValues().month)?.label} de {form.getValues().year}
+              Escala de {months.find(m => m.value === form.getValues().month)?.label} de {form.getValues().year}. Clique em um voluntário para editar.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -197,7 +250,7 @@ export default function SchedulePage() {
               <Table className="min-w-full">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="sticky left-0 bg-background/95 backdrop-blur-sm w-[150px]">Área</TableHead>
+                    <TableHead className="sticky left-0 bg-background/95 backdrop-blur-sm w-[150px] z-10">Área</TableHead>
                     {monthlyEvents.map((event, index) => (
                       <TableHead key={index} className="text-center whitespace-nowrap">
                         <div className="font-bold">{format(event.date, 'dd/MM')}</div>
@@ -208,21 +261,44 @@ export default function SchedulePage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {areasOfService.map(area => (
+                  {areasForTable.map(area => (
                     <TableRow key={area.name}>
-                      <TableCell className="font-semibold sticky left-0 bg-background/95 backdrop-blur-sm w-[150px]">{area.name}</TableCell>
+                      <TableCell className="font-semibold sticky left-0 bg-background/95 backdrop-blur-sm w-[150px] z-10">{area.name}</TableCell>
                       {monthlyEvents.map((event, index) => {
                         const scheduleKey = `${event.uniqueName} - ${area.name}`;
-                        const volunteer = schedule[scheduleKey];
+                        const volunteerName = schedule[scheduleKey];
                         const needsVolunteer = event.areas.includes(area.name);
+                        const eligibleVolunteers = getEligibleVolunteers(area.name);
 
+                        if (!needsVolunteer) {
+                          return <TableCell key={index} className="bg-muted/30" />;
+                        }
+                        
                         return (
-                          <TableCell key={index} className={`text-center ${!needsVolunteer ? 'bg-muted/30' : ''}`}>
-                            {needsVolunteer ? (
-                                <span className={volunteer ? 'font-medium' : 'text-muted-foreground italic'}>
-                                    {volunteer || 'Não alocado'}
-                                </span>
-                            ) : null}
+                          <TableCell key={index} className="text-center">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-auto p-1 text-left font-normal w-full justify-center">
+                                  <span className={volunteerName ? 'font-medium' : 'text-muted-foreground italic'}>
+                                      {volunteerName || 'Não alocado'}
+                                  </span>
+                                 </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="start">
+                                <DropdownMenuItem onClick={() => handleManualChange(scheduleKey, null)}>
+                                    Não alocado
+                                </DropdownMenuItem>
+                                {eligibleVolunteers.map(v => (
+                                   <DropdownMenuItem 
+                                      key={v.id} 
+                                      onClick={() => handleManualChange(scheduleKey, v.name)}
+                                      disabled={v.name === volunteerName}
+                                    >
+                                    {v.name}
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         );
                       })}
