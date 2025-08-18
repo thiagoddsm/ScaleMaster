@@ -43,7 +43,7 @@ const prompt = ai.definePrompt({
   name: 'smartScheduleGenerationPrompt',
   input: {schema: SmartScheduleGenerationInputSchema},
   output: {schema: SmartScheduleGenerationOutputSchema},
-  prompt: `You are a scheduling assistant. Your task is to generate a list of volunteer assignments based on the provided data.
+  prompt: `You are a very precise and rule-following scheduling assistant. Your task is to generate a list of volunteer assignments based on the provided data.
 
 **DATA:**
 - **Month:** {{{month}}}/{{{year}}}
@@ -53,22 +53,22 @@ const prompt = ai.definePrompt({
 - **All Possible Areas:** {{{areasOfService}}}
 - **Specific Area Filter:** {{{specificArea}}}
 
-**RULES (Follow these EXACTLY):**
+**OUTPUT RULES (Follow these EXACTLY and in this order):**
 
-1.  **Create Assignments ONLY for Required Slots:**
+1.  **Generate Assignments ONLY for Required Slots:**
     - Look at each event in the \`Events\` data.
     - For each area listed in an event's \`areas\` array, create the specified number of assignment objects.
-    - **IMPORTANT:** If an event does NOT require a specific area, do NOT generate an assignment for it.
+    - **Crucially: If an event does NOT require a specific area, do NOT generate an assignment object for it.**
 
-2.  **Assignment Criteria (ALL must be met):**
+2.  **Assignment Criteria (ALL must be met to assign a volunteer):**
     a.  **Correct Team:** The volunteer's team must be the one scheduled for the event's date, according to the \`Team Schedule\`.
-    b.  **Correct Area:** The volunteer must be qualified for the area of service (\`areas\` array).
-    c.  **Correct Availability:** The volunteer must be available for the specific event name (\`availability\` array).
+    b.  **Correct Area:** The volunteer must be qualified for the area of service (must have the area in their \`areas\` array).
+    c.  **Correct Availability:** The volunteer must be available for the specific event name (must have the event's name in their \`availability\` array).
     d.  **No Double Booking:** A volunteer cannot be assigned to more than one position in the same event.
 
 3.  **Filling the Assignment Object:**
-    - **Successful:** If you find a volunteer who meets ALL criteria (2a, 2b, 2c, 2d), put their name in the \`volunteer\` field. Set the \`reason\` field to \`null\`.
-    - **Unsuccessful:** If NO volunteer can be found for a slot, set the \`volunteer\` field to \`null\`. Set the \`reason\` field to a SHORT, one-sentence explanation (e.g., "No available volunteers from the scheduled team.").
+    - **Successful Assignment:** If you find a volunteer who meets ALL criteria (2a, 2b, 2c, 2d), put their full name in the \`volunteer\` field. Set the \`reason\` field to \`null\`.
+    - **Unsuccessful Assignment:** If NO volunteer can be found for a slot that meets all criteria, set the \`volunteer\` field to \`null\`. Set the \`reason\` field to a SHORT, one-sentence explanation (e.g., "No available volunteers from the scheduled team.").
 
 4.  **Area Filtering:**
     - If a \`Specific Area Filter\` is provided, ONLY generate assignments for that specific area across all events.
@@ -76,7 +76,7 @@ const prompt = ai.definePrompt({
 
 5.  **OUTPUT FORMAT (Strictly Enforced):**
     - The output MUST be a raw JSON object.
-    - Do NOT include any text, comments, or markdown formatting outside of the JSON structure.
+    - Do NOT include any text, comments, markdown formatting, or your thought process outside of the JSON structure.
     - The \`reason\` field must be a short, direct sentence, NOT your thought process.
 
 Generate the \`assignments\` list now.

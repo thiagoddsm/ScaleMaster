@@ -51,9 +51,9 @@ const getEventsForMonth = (month: number, year: number): MonthlyEvent[] => {
           eventHappensToday = true;
         }
       } else if (event.frequency === 'Pontual' && event.date) {
-        const eventDate = parse(event.date, 'yyyy-MM-dd', new Date());
-        if (eventDate.getDate() === day && eventDate.getMonth() === (month - 1) && eventDate.getFullYear() === year) {
-          eventHappensToday = true;
+        const [eventYear, eventMonth, eventDay] = event.date.split('-').map(Number);
+        if (eventYear === year && eventMonth === month && eventDay === day) {
+            eventHappensToday = true;
         }
       }
 
@@ -332,7 +332,9 @@ export default function SchedulePage() {
 
                             const scheduleKey = `${event.uniqueName} - ${area.name} - ${i + 1}`;
                             const scheduleSlot = schedule[scheduleKey];
-                            const volunteerName = scheduleSlot?.volunteer?.replace(/,$/, '');
+                            const volunteerName = scheduleSlot?.volunteer?.replace(/,$/, '') || null;
+                            const isGarbage = volunteerName && (volunteerName.includes("if available") || volunteerName.includes("null;"));
+                            const finalVolunteerName = isGarbage ? null : volunteerName;
                             const reason = scheduleSlot?.reason;
                             const eligibleVolunteers = getEligibleVolunteers(area.name);
                             
@@ -342,8 +344,8 @@ export default function SchedulePage() {
                                 <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" className="h-auto p-1 text-left font-normal w-full justify-center flex-col">
-                                    <span className={volunteerName ? 'font-medium' : 'text-muted-foreground italic'}>
-                                        {volunteerName || 'Não alocado'}
+                                    <span className={finalVolunteerName ? 'font-medium' : 'text-muted-foreground italic'}>
+                                        {finalVolunteerName || 'Não alocado'}
                                     </span>
                                      {reason && (
                                         <span className="text-xs text-muted-foreground italic">({reason})</span>
@@ -387,3 +389,4 @@ export default function SchedulePage() {
   );
 
     
+
