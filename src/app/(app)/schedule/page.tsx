@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Save } from 'lucide-react';
-import { getDaysInMonth, set, format } from 'date-fns';
+import { getDaysInMonth, set, format, parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import { smartScheduleGeneration } from '@/ai/flows/smart-schedule-generation';
@@ -45,22 +45,22 @@ const getEventsForMonth = (month: number, year: number): MonthlyEvent[] => {
 
     allEvents.forEach(event => {
       let eventHappensToday = false;
-      const [hours, minutes] = event.time.split(':').map(Number);
-      const eventDateWithTime = set(currentDate, { hours, minutes, seconds: 0, milliseconds: 0 });
 
       if (event.frequency === 'Semanal') {
         if (weekDaysMap[event.dayOfWeek!] === currentDayOfWeek) {
           eventHappensToday = true;
         }
       } else if (event.frequency === 'Pontual' && event.date) {
-        // Correctly parse the event date string 'YYYY-MM-DD'
-        const [eventYear, eventMonth, eventDay] = event.date.split('-').map(Number);
-        if (eventDay === day && eventMonth === month && eventYear === year) {
+        // Use parse to avoid timezone issues, treat date as local
+        const eventDate = parse(event.date, 'yyyy-MM-dd', new Date());
+        if (eventDate.getDate() === day && eventDate.getMonth() === (month - 1) && eventDate.getFullYear() === year) {
           eventHappensToday = true;
         }
       }
 
       if (eventHappensToday) {
+        const [hours, minutes] = event.time.split(':').map(Number);
+        const eventDateWithTime = set(currentDate, { hours, minutes, seconds: 0, milliseconds: 0 });
         const formattedDate = format(eventDateWithTime, 'dd/MM');
         monthlyEvents.push({
           date: eventDateWithTime,
@@ -179,13 +179,15 @@ export default function SchedulePage() {
 
         // Transform the array of assignments into the schedule map format
         const generatedSchedule: GeneratedSchedule = {};
-        result.assignments.forEach(assignment => {
-            const key = `${assignment.eventUniqueName} - ${assignment.area} - ${assignment.position}`;
-            generatedSchedule[key] = {
-                volunteer: assignment.volunteer ?? null,
-                reason: assignment.reason ?? (assignment.volunteer ? null : "Não foi possível alocar"),
-            };
-        });
+        if (result && result.assignments) {
+          result.assignments.forEach(assignment => {
+              const key = `${assignment.eventUniqueName} - ${assignment.area} - ${assignment.position}`;
+              generatedSchedule[key] = {
+                  volunteer: assignment.volunteer ?? null,
+                  reason: assignment.reason ?? (assignment.volunteer ? null : "Não foi possível alocar"),
+              };
+          });
+        }
         
         if (Object.keys(generatedSchedule).length === 0) {
              toast({
