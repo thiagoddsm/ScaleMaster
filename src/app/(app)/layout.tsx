@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Blocks, CalendarCheck, CalendarPlus, LayoutDashboard, Users, Construction } from 'lucide-react';
+import { Blocks, CalendarCheck, CalendarPlus, LayoutDashboard, Users, Construction, Shield } from 'lucide-react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
 import { Button } from "@/components/ui/button";
 
@@ -13,6 +13,7 @@ const menuItems = [
   { href: '/volunteers', label: 'Voluntários', icon: Users },
   { href: '/events', label: 'Eventos', icon: CalendarPlus },
   { href: '/areas', label: 'Áreas de Serviço', icon: Construction },
+  { href: '/teams', label: 'Equipes', icon: Shield },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -35,7 +36,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton
                   asChild
-                  isActive={pathname === item.href}
+                  isActive={pathname.startsWith(item.href)}
                   tooltip={{
                     children: item.label,
                     className: "bg-primary text-primary-foreground",
