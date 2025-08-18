@@ -26,14 +26,10 @@ export const areasOfService: AreaOfService[] = [
 ];
 
 export const teams: Team[] = [
-  { name: 'Equipe Amarela' },
-  { name: 'Equipe Azul' },
-  { name: 'Equipe Verde' },
-  { name: 'Equipe Vermelha' },
-  { name: 'Equipe Alpha' },
-  { name: 'Equipe Beta' },
-  { name: 'Equipe Gamma' },
-  { name: 'Equipe Delta' },
+  { name: 'Alpha' },
+  { name: 'Bravo' },
+  { name: 'Charlie' },
+  { name: 'Delta' },
   { name: 'N/A' },
 ];
 
@@ -44,7 +40,8 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)98104-1093",
     "email": "leo.f.silva48@gmail.com",
     "areas": [
-      "Apoio"
+      "Apoio",
+      "Intercessão"
     ],
     "team": "N/A",
     "availability": []
@@ -246,7 +243,7 @@ export const volunteers: Volunteer[] = [
     "areas": [
       "Bistro"
     ],
-    "team": "Equipe Amarela",
+    "team": "Charlie",
     "availability": []
   },
   {
@@ -336,7 +333,7 @@ export const volunteers: Volunteer[] = [
     "areas": [
       "Bistro"
     ],
-    "team": "Equipe Verde",
+    "team": "Bravo",
     "availability": []
   },
   {
@@ -523,7 +520,7 @@ export const volunteers: Volunteer[] = [
     "areas": [
       "Boutique"
     ],
-    "team": "Equipe Azul",
+    "team": "Bravo",
     "availability": []
   },
   {
@@ -633,7 +630,7 @@ export const volunteers: Volunteer[] = [
     "email": "contatojeanmoraes2@gmail.com",
     "areas": [
       "Broadcasting",
-      "Professores"
+      "Staff"
     ],
     "team": "N/A",
     "availability": []
@@ -825,7 +822,7 @@ export const volunteers: Volunteer[] = [
     "areas": [
       "Cleaning"
     ],
-    "team": "Equipe Vermelha",
+    "team": "Delta",
     "availability": []
   },
   {
@@ -1139,7 +1136,7 @@ export const volunteers: Volunteer[] = [
     "email": "erickcostamonteiro@gmail.com",
     "areas": [
       "Coordenação de culto",
-      "Professores"
+      "Staff"
     ],
     "team": "N/A",
     "availability": []
@@ -1152,7 +1149,7 @@ export const volunteers: Volunteer[] = [
     "areas": [
       "Coordenação de culto",
       "Espaço Vip",
-      "Professores"
+      "Staff"
     ],
     "team": "N/A",
     "availability": []
@@ -1245,7 +1242,7 @@ export const volunteers: Volunteer[] = [
     "areas": [
       "DIS"
     ],
-    "team": "Equipe Amarela",
+    "team": "Charlie",
     "availability": []
   },
   {
@@ -1268,7 +1265,7 @@ export const volunteers: Volunteer[] = [
     "areas": [
       "DIS"
     ],
-    "team": "Equipe Verde",
+    "team": "Bravo",
     "availability": []
   },
   {
@@ -1311,11 +1308,10 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)99702-1707",
     "email": "madasial@gmail.com",
     "areas": [
-      "Eklesia",
       "Espaço Vip",
-      "Professores"
+      "Staff"
     ],
-    "team": "Equipe Azul",
+    "team": "Bravo",
     "availability": []
   },
   {
@@ -1324,7 +1320,6 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)99328-8614",
     "email": "dutra269@gmail.com",
     "areas": [
-      "Eklesia",
       "Espaço Vip",
       "Intercessão",
       "Recepção"
@@ -1338,10 +1333,10 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)98900-1302",
     "email": "thiago-ddsm@hotmail.com",
     "areas": [
-      "Eklesia",
-      "Som"
+      "Som",
+      "Staff"
     ],
-    "team": "Equipe Vermelha",
+    "team": "Delta",
     "availability": []
   },
   {
@@ -1352,7 +1347,7 @@ export const volunteers: Volunteer[] = [
     "areas": [
       "Espaço Vip"
     ],
-    "team": "Equipe Amarela",
+    "team": "Charlie",
     "availability": []
   },
   {
@@ -1361,7 +1356,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)96806-5661",
     "email": "anacbjanuario@gmail.com",
     "areas": [],
-    "team": "Equipe Amarela",
+    "team": "Alpha",
     "availability": []
   },
   {
@@ -1372,7 +1367,7 @@ export const volunteers: Volunteer[] = [
     "areas": [
       "Recepção"
     ],
-    "team": "Equipe Amarela",
+    "team": "Charlie",
     "availability": []
   },
   {
@@ -1381,7 +1376,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)97748-7337",
     "email": "kxi1243@gmail.com",
     "areas": [],
-    "team": "Equipe Amarela",
+    "team": "Charlie",
     "availability": []
   },
   {
@@ -1390,7 +1385,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)99489-6964",
     "email": "bclongobuco@gmail.com",
     "areas": [],
-    "team": "Equipe Amarela",
+    "team": "Charlie",
     "availability": []
   },
   {
@@ -1399,7 +1394,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)96778-7549",
     "email": "moretsoncarol@gmail.com",
     "areas": [],
-    "team": "Equipe Amarela",
+    "team": "Charlie",
     "availability": []
   },
   {
@@ -1408,7 +1403,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)97449-2776",
     "email": "cintia.psicopedagoga75@gmail.com",
     "areas": [],
-    "team": "Equipe Amarela",
+    "team": "Charlie",
     "availability": []
   },
   {
@@ -1417,7 +1412,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)99025-6833",
     "email": "estephanyo16@gmail.com",
     "areas": [],
-    "team": "Equipe Amarela",
+    "team": "Charlie",
     "availability": []
   },
   {
@@ -1426,7 +1421,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)98427-9493",
     "email": "fehorsth81@gmail.com",
     "areas": [],
-    "team": "Equipe Amarela",
+    "team": "Charlie",
     "availability": []
   },
   {
@@ -1435,7 +1430,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)97886-3403",
     "email": "gabrielecsena@gmail.com",
     "areas": [],
-    "team": "Equipe Amarela",
+    "team": "Charlie",
     "availability": []
   },
   {
@@ -1446,7 +1441,7 @@ export const volunteers: Volunteer[] = [
     "areas": [
       "Recepção"
     ],
-    "team": "Equipe Amarela",
+    "team": "Charlie",
     "availability": []
   },
   {
@@ -1457,7 +1452,7 @@ export const volunteers: Volunteer[] = [
     "areas": [
       "Recepção"
     ],
-    "team": "Equipe Amarela",
+    "team": "Charlie",
     "availability": []
   },
   {
@@ -1466,7 +1461,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)97626-0256",
     "email": "jjanuario@id.uff.br",
     "areas": [],
-    "team": "Equipe Amarela",
+    "team": "Charlie",
     "availability": []
   },
   {
@@ -1477,7 +1472,7 @@ export const volunteers: Volunteer[] = [
     "areas": [
       "Musikids"
     ],
-    "team": "Equipe Amarela",
+    "team": "Charlie",
     "availability": []
   },
   {
@@ -1486,7 +1481,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)98661-0275",
     "email": "lethiciagutierrez01@gmail.com",
     "areas": [],
-    "team": "Equipe Amarela",
+    "team": "Charlie",
     "availability": []
   },
   {
@@ -1495,7 +1490,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)99444-0009",
     "email": "oliveira.anuncios123@gmail.com",
     "areas": [],
-    "team": "Equipe Amarela",
+    "team": "Charlie",
     "availability": []
   },
   {
@@ -1504,7 +1499,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)98622-0472",
     "email": "rowenna_coubelle@hotmail.com",
     "areas": [],
-    "team": "Equipe Amarela",
+    "team": "Charlie",
     "availability": []
   },
   {
@@ -1513,7 +1508,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)96565-6795",
     "email": "sandynevescarraro@gmail.com",
     "areas": [],
-    "team": "Equipe Amarela",
+    "team": "Charlie",
     "availability": []
   },
   {
@@ -1522,7 +1517,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)98659-1264",
     "email": "semmonteiro@hotmail.com",
     "areas": [],
-    "team": "Equipe Amarela",
+    "team": "Alpha",
     "availability": []
   },
   {
@@ -1531,7 +1526,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)99514-0096",
     "email": "taismoretson@hotmail.com",
     "areas": [],
-    "team": "Equipe Amarela",
+    "team": "Charlie",
     "availability": []
   },
   {
@@ -1540,7 +1535,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)99645-0221",
     "email": "vmottadasilvaa@gmail.com",
     "areas": [],
-    "team": "Equipe Amarela",
+    "team": "Charlie",
     "availability": []
   },
   {
@@ -1549,7 +1544,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)99966-6129",
     "email": "anabeatrizfdesouza@gmail.com",
     "areas": [],
-    "team": "Equipe Azul",
+    "team": "Bravo",
     "availability": []
   },
   {
@@ -1558,7 +1553,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)96624-7595",
     "email": "andrezaduarte77@gmail.com",
     "areas": [],
-    "team": "Equipe Azul",
+    "team": "Bravo",
     "availability": []
   },
   {
@@ -1567,7 +1562,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)98525-8249",
     "email": "bt240596@gmail.com",
     "areas": [],
-    "team": "Equipe Azul",
+    "team": "Bravo",
     "availability": []
   },
   {
@@ -1576,7 +1571,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)99854-8562",
     "email": "biacalispto@hotmail.com",
     "areas": [],
-    "team": "Equipe Azul",
+    "team": "Bravo",
     "availability": []
   },
   {
@@ -1587,7 +1582,7 @@ export const volunteers: Volunteer[] = [
     "areas": [
       "Saúde"
     ],
-    "team": "Equipe Azul",
+    "team": "Bravo",
     "availability": []
   },
   {
@@ -1596,7 +1591,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)96444-5694",
     "email": "gabrielanjos0107@gmail.com",
     "areas": [],
-    "team": "Equipe Azul",
+    "team": "Bravo",
     "availability": []
   },
   {
@@ -1605,7 +1600,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)96468-5635",
     "email": "iasminnunessales@gmail.com",
     "areas": [],
-    "team": "Equipe Azul",
+    "team": "Bravo",
     "availability": []
   },
   {
@@ -1614,7 +1609,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)98801-8641",
     "email": "josipaiva2013@gmail.com",
     "areas": [],
-    "team": "Equipe Azul",
+    "team": "Bravo",
     "availability": []
   },
   {
@@ -1623,7 +1618,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)99362-6362",
     "email": "larissesiso@gmail.com",
     "areas": [],
-    "team": "Equipe Azul",
+    "team": "Bravo",
     "availability": []
   },
   {
@@ -1632,7 +1627,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)97022-5580",
     "email": "leticiablanche@icloud.com",
     "areas": [],
-    "team": "Equipe Azul",
+    "team": "Bravo",
     "availability": []
   },
   {
@@ -1641,7 +1636,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)98846-3749",
     "email": "lorenarocha301@gmail.com",
     "areas": [],
-    "team": "Equipe Azul",
+    "team": "Bravo",
     "availability": []
   },
   {
@@ -1650,7 +1645,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)98687-5820",
     "email": "luciaederlon@hotmail.com",
     "areas": [],
-    "team": "Equipe Azul",
+    "team": "Bravo",
     "availability": []
   },
   {
@@ -1661,7 +1656,7 @@ export const volunteers: Volunteer[] = [
     "areas": [
       "Espaço Vip"
     ],
-    "team": "Equipe Azul",
+    "team": "Bravo",
     "availability": []
   },
   {
@@ -1672,7 +1667,7 @@ export const volunteers: Volunteer[] = [
     "areas": [
       "Saúde"
     ],
-    "team": "Equipe Azul",
+    "team": "Bravo",
     "availability": []
   },
   {
@@ -1683,7 +1678,7 @@ export const volunteers: Volunteer[] = [
     "areas": [
       "Fotografia"
     ],
-    "team": "Equipe Azul",
+    "team": "Bravo",
     "availability": []
   },
   {
@@ -1694,7 +1689,7 @@ export const volunteers: Volunteer[] = [
     "areas": [
       "Espaço Vip"
     ],
-    "team": "Equipe Azul",
+    "team": "Bravo",
     "availability": []
   },
   {
@@ -1705,7 +1700,7 @@ export const volunteers: Volunteer[] = [
     "areas": [
       "Musikids"
     ],
-    "team": "Equipe Azul",
+    "team": "Bravo",
     "availability": []
   },
   {
@@ -1714,7 +1709,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)98614-0797",
     "email": "sarabeabeatriz.sb@gmail.com",
     "areas": [],
-    "team": "Equipe Azul",
+    "team": "Bravo",
     "availability": []
   },
   {
@@ -1723,7 +1718,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)99558-4912",
     "email": "sharlony.gcn@gmail.com",
     "areas": [],
-    "team": "Equipe Azul",
+    "team": "Bravo",
     "availability": []
   },
   {
@@ -1732,7 +1727,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)99686-7388",
     "email": "nicoleesouzaa1@gmail.com",
     "areas": [],
-    "team": "Equipe Azul",
+    "team": "Bravo",
     "availability": []
   },
   {
@@ -1741,7 +1736,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)98988-1954",
     "email": "bragaanabeatriz43@gmail.com",
     "areas": [],
-    "team": "Equipe Verde",
+    "team": "Alpha",
     "availability": []
   },
   {
@@ -1750,7 +1745,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)98865-8805",
     "email": "cintiaalmeida@myyahoo.com",
     "areas": [],
-    "team": "Equipe Verde",
+    "team": "Alpha",
     "availability": []
   },
   {
@@ -1759,7 +1754,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)99722-2739",
     "email": "dsds.danielsilvadossantos@gmail.com",
     "areas": [],
-    "team": "Equipe Verde",
+    "team": "Alpha",
     "availability": []
   },
   {
@@ -1768,7 +1763,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)99351-4706",
     "email": "erika_andrade50@yahoo.com.br",
     "areas": [],
-    "team": "Equipe Verde",
+    "team": "Alpha",
     "availability": []
   },
   {
@@ -1777,7 +1772,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)98003-1090",
     "email": "evbastos@id.uff.br",
     "areas": [],
-    "team": "Equipe Verde",
+    "team": "Alpha",
     "availability": []
   },
   {
@@ -1786,7 +1781,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)98815-6567",
     "email": "nanabrum@hotmail.com",
     "areas": [],
-    "team": "Equipe Verde",
+    "team": "Alpha",
     "availability": []
   },
   {
@@ -1795,7 +1790,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)99595-5003",
     "email": "keitialmeidaaraujo@gmail.com",
     "areas": [],
-    "team": "Equipe Verde",
+    "team": "Alpha",
     "availability": []
   },
   {
@@ -1804,7 +1799,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)99754-2121",
     "email": "leticiaavfarias@gmail.com",
     "areas": [],
-    "team": "Equipe Verde",
+    "team": "Alpha",
     "availability": []
   },
   {
@@ -1813,7 +1808,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)98225-3546",
     "email": "myllena.tavaress@gmail.com",
     "areas": [],
-    "team": "Equipe Verde",
+    "team": "Alpha",
     "availability": []
   },
   {
@@ -1822,7 +1817,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)97361-3550",
     "email": "patriciadfreitas21@gmail.com",
     "areas": [],
-    "team": "Equipe Verde",
+    "team": "Alpha",
     "availability": []
   },
   {
@@ -1831,7 +1826,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)96549-5744",
     "email": "raquel.ribeiro93@yahoo.com",
     "areas": [],
-    "team": "Equipe Verde",
+    "team": "Alpha",
     "availability": []
   },
   {
@@ -1840,7 +1835,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)96921-7260",
     "email": "raquelsousa4r@icloud.com",
     "areas": [],
-    "team": "Equipe Verde",
+    "team": "Alpha",
     "availability": []
   },
   {
@@ -1849,7 +1844,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)99754-9905",
     "email": "rejane.v.farias@gmail.com",
     "areas": [],
-    "team": "Equipe Verde",
+    "team": "Alpha",
     "availability": []
   },
   {
@@ -1858,7 +1853,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)99555-8684",
     "email": "savinhamsantos@gmail.com",
     "areas": [],
-    "team": "Equipe Verde",
+    "team": "Alpha",
     "availability": []
   },
   {
@@ -1867,7 +1862,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)96992-1209",
     "email": "susu.leal@hotmail.com",
     "areas": [],
-    "team": "Equipe Verde",
+    "team": "Alpha",
     "availability": []
   },
   {
@@ -1876,7 +1871,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)98819-4722",
     "email": "thaissamaia23@gmail.com",
     "areas": [],
-    "team": "Equipe Verde",
+    "team": "Alpha",
     "availability": []
   },
   {
@@ -1885,7 +1880,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)98570-9715",
     "email": "castrosan94@gmail.com",
     "areas": [],
-    "team": "Equipe Verde",
+    "team": "Alpha",
     "availability": []
   },
   {
@@ -1894,7 +1889,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)98865-7710",
     "email": "soparaconcursos10@gmail.com",
     "areas": [],
-    "team": "Equipe Vermelha",
+    "team": "Delta",
     "availability": []
   },
   {
@@ -1903,7 +1898,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)96688-5110",
     "email": "amandinhamelyssa@gmail.com",
     "areas": [],
-    "team": "Equipe Vermelha",
+    "team": "Delta",
     "availability": []
   },
   {
@@ -1912,7 +1907,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)96418-8743",
     "email": "anaclaudia.lazzaro@gmail.com",
     "areas": [],
-    "team": "Equipe Vermelha",
+    "team": "Delta",
     "availability": []
   },
   {
@@ -1923,7 +1918,7 @@ export const volunteers: Volunteer[] = [
     "areas": [
       "Recepção"
     ],
-    "team": "Equipe Vermelha",
+    "team": "Delta",
     "availability": []
   },
   {
@@ -1932,7 +1927,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)99850-1700",
     "email": "anaklucas19@gmail.com",
     "areas": [],
-    "team": "Equipe Vermelha",
+    "team": "Delta",
     "availability": []
   },
   {
@@ -1941,7 +1936,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)98821-9478",
     "email": "cinthiaalentejo@hotmail.com",
     "areas": [],
-    "team": "Equipe Vermelha",
+    "team": "Delta",
     "availability": []
   },
   {
@@ -1950,7 +1945,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)99159-7038",
     "email": "eliakimsilva@gmail.com",
     "areas": [],
-    "team": "Equipe Vermelha",
+    "team": "Delta",
     "availability": []
   },
   {
@@ -1961,7 +1956,7 @@ export const volunteers: Volunteer[] = [
     "areas": [
       "Som"
     ],
-    "team": "Equipe Vermelha",
+    "team": "Delta",
     "availability": []
   },
   {
@@ -1970,7 +1965,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)99805-2776",
     "email": "gabriellapereira01@gmail.com",
     "areas": [],
-    "team": "Equipe Vermelha",
+    "team": "Delta",
     "availability": []
   },
   {
@@ -1979,7 +1974,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)98111-1111",
     "email": "belathurler@gmail.com",
     "areas": [],
-    "team": "Equipe Vermelha",
+    "team": "Delta",
     "availability": []
   },
   {
@@ -1988,7 +1983,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)96556-2840",
     "email": "isabelastavares@gmail.com",
     "areas": [],
-    "team": "Equipe Vermelha",
+    "team": "Delta",
     "availability": []
   },
   {
@@ -1999,7 +1994,7 @@ export const volunteers: Volunteer[] = [
     "areas": [
       "Recepção"
     ],
-    "team": "Equipe Vermelha",
+    "team": "Delta",
     "availability": []
   },
   {
@@ -2008,7 +2003,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)97206-2322",
     "email": "juliannasantanna.jps@gmail.com",
     "areas": [],
-    "team": "Equipe Vermelha",
+    "team": "Delta",
     "availability": []
   },
   {
@@ -2019,7 +2014,7 @@ export const volunteers: Volunteer[] = [
     "areas": [
       "Espaço Vip"
     ],
-    "team": "Equipe Vermelha",
+    "team": "Delta",
     "availability": []
   },
   {
@@ -2028,7 +2023,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)98982-9043",
     "email": "leticiachristino21@gmail.com",
     "areas": [],
-    "team": "Equipe Vermelha",
+    "team": "Delta",
     "availability": []
   },
   {
@@ -2037,7 +2032,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)99801-4521",
     "email": "livyaobcorrea@gmail.com",
     "areas": [],
-    "team": "Equipe Vermelha",
+    "team": "Delta",
     "availability": []
   },
   {
@@ -2046,7 +2041,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)92006-4368",
     "email": "dudacampos_reserva@hotmail.com",
     "areas": [],
-    "team": "Equipe Vermelha",
+    "team": "Delta",
     "availability": []
   },
   {
@@ -2055,7 +2050,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)97126-3178",
     "email": "nickborges06@gmail.com",
     "areas": [],
-    "team": "Equipe Vermelha",
+    "team": "Delta",
     "availability": []
   },
   {
@@ -2064,7 +2059,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)99161-2928",
     "email": "silvapattyanne@gmail.com",
     "areas": [],
-    "team": "Equipe Vermelha",
+    "team": "Delta",
     "availability": []
   },
   {
@@ -2073,7 +2068,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)99436-3458",
     "email": "arateixa@gmail.com",
     "areas": [],
-    "team": "Equipe Vermelha",
+    "team": "Delta",
     "availability": []
   },
   {
@@ -2082,7 +2077,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)99486-8551",
     "email": "rdsramos1@hotmail.com",
     "areas": [],
-    "team": "Equipe Vermelha",
+    "team": "Delta",
     "availability": []
   },
   {
@@ -2130,7 +2125,7 @@ export const volunteers: Volunteer[] = [
     "areas": [
       "Espaço Vip",
       "Musikids",
-      "Professores"
+      "Staff"
     ],
     "team": "N/A",
     "availability": []
@@ -2190,7 +2185,7 @@ export const volunteers: Volunteer[] = [
     "email": "marcos.santo@enel.com",
     "areas": [
       "Espaço Vip",
-      "Professores"
+      "Staff"
     ],
     "team": "N/A",
     "availability": []
@@ -2995,7 +2990,6 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)98564-3030",
     "email": "adrianoalcantararibeiro@gmail.com",
     "areas": [
-      "Professores",
       "Staff"
     ],
     "team": "N/A",
@@ -3007,7 +3001,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)96607-7759",
     "email": "mateusg.schwartz@gmail.com",
     "areas": [
-      "Professores"
+      "Staff"
     ],
     "team": "N/A",
     "availability": []
@@ -3018,7 +3012,7 @@ export const volunteers: Volunteer[] = [
     "phone": "(21)99524-7838",
     "email": "hugocamposdesouza@hotmail.com",
     "areas": [
-      "Professores"
+      "Staff"
     ],
     "team": "N/A",
     "availability": []
@@ -4188,16 +4182,16 @@ export const events: Event[] = [
 ];
 
 export const teamSchedules: TeamSchedule[] = [
-    { team: 'Equipe Alpha', startDate: '2024-07-01', endDate: '2024-07-07'},
-    { team: 'Equipe Beta', startDate: '2024-07-08', endDate: '2024-07-14'},
-    { team: 'Equipe Gamma', startDate: '2024-07-15', endDate: '2024-07-21'},
-    { team: 'Equipe Delta', startDate: '2024-07-22', endDate: '2024-07-28'},
-    { team: 'Equipe Alpha', startDate: '2024-07-29', endDate: '2024-08-04'},
-    { team: 'Equipe Beta', startDate: '2024-08-05', endDate: '2024-08-11'},
-    { team: 'Equipe Gamma', startDate: '2024-08-12', endDate: '2024-08-18'},
-    { team: 'Equipe Delta', startDate: '2024-08-19', endDate: '2024-08-25'},
-    { team: 'Equipe Amarela', startDate: '2024-09-02', endDate: '2024-09-08'},
-    { team: 'Equipe Azul', startDate: '2024-09-09', endDate: '2024-09-15'},
-    { team: 'Equipe Verde', startDate: '2024-09-16', endDate: '2024-09-22'},
-    { team: 'Equipe Vermelha', startDate: '2024-09-23', endDate: '2024-09-29'},
+    { team: 'Alpha', startDate: '2024-07-01', endDate: '2024-07-07'},
+    { team: 'Bravo', startDate: '2024-07-08', endDate: '2024-07-14'},
+    { team: 'Charlie', startDate: '2024-07-15', endDate: '2024-07-21'},
+    { team: 'Delta', startDate: '2024-07-22', endDate: '2024-07-28'},
+    { team: 'Alpha', startDate: '2024-07-29', endDate: '2024-08-04'},
+    { team: 'Bravo', startDate: '2024-08-05', endDate: '2024-08-11'},
+    { team: 'Charlie', startDate: '2024-08-12', endDate: '2024-08-18'},
+    { team: 'Delta', startDate: '2024-08-19', endDate: '2024-08-25'},
+    { team: 'Alpha', startDate: '2024-09-02', endDate: '2024-09-08'},
+    { team: 'Bravo', startDate: '2024-09-09', endDate: '2024-09-15'},
+    { team: 'Charlie', startDate: '2024-09-16', endDate: '2024-09-22'},
+    { team: 'Delta', startDate: '2024-09-23', endDate: '2024-09-29'},
 ];
