@@ -43,44 +43,43 @@ const prompt = ai.definePrompt({
   name: 'smartScheduleGenerationPrompt',
   input: {schema: SmartScheduleGenerationInputSchema},
   output: {schema: SmartScheduleGenerationOutputSchema},
-  prompt: `You are an AI assistant that generates a volunteer schedule for events. Your task is to create a list of assignment objects based on the provided data.
+  prompt: `You are a scheduling assistant. Your task is to generate a list of volunteer assignments based on the provided data.
 
-Here is the data you will use:
-- Month: {{{month}}}/{{{year}}}
-- Events Data: {{{eventsData}}} (A list of all events happening this month)
-- Volunteers Data: {{{volunteersData}}} (A list of all volunteers and their details)
-- Teams Schedule Data: {{{teamsScheduleData}}} (The rotation schedule for the teams)
-- All Possible Areas of Service: {{{areasOfService}}}
+**DATA:**
+- **Month:** {{{month}}}/{{{year}}}
+- **Events:** {{{eventsData}}}
+- **Volunteers:** {{{volunteersData}}}
+- **Team Schedule:** {{{teamsScheduleData}}}
+- **All Possible Areas:** {{{areasOfService}}}
+- **Specific Area Filter:** {{{specificArea}}}
 
-**Your Goal:**
-Generate a complete list of assignments for all required positions in all events.
+**RULES (Follow these EXACTLY):**
 
-**Follow these rules precisely:**
+1.  **Create Assignments ONLY for Required Slots:**
+    - Look at each event in the \`Events\` data.
+    - For each area listed in an event's \`areas\` array, create the specified number of assignment objects.
+    - **IMPORTANT:** If an event does NOT require a specific area, do NOT generate an assignment for it.
 
-1.  **One Assignment per Slot:** For every single volunteer position required at every event, you MUST create one assignment object.
-    - Example: If "Recepção" needs 3 volunteers, you must create 3 separate assignment objects for that area in that event, with \`position\` numbers 1, 2, and 3.
+2.  **Assignment Criteria (ALL must be met):**
+    a.  **Correct Team:** The volunteer's team must be the one scheduled for the event's date, according to the \`Team Schedule\`.
+    b.  **Correct Area:** The volunteer must be qualified for the area of service (\`areas\` array).
+    c.  **Correct Availability:** The volunteer must be available for the specific event name (\`availability\` array).
+    d.  **No Double Booking:** A volunteer cannot be assigned to more than one position in the same event.
 
-2.  **Check All Constraints Before Assigning:** To assign a volunteer, ALL of the following must be true:
-    a.  **Availability:** The volunteer's \`availability\` array must include the name of the event.
-    b.  **Area Qualification:** The volunteer's \`areas\` array must include the area of service for the assignment.
-    c.  **Team on Duty:** The event's date must fall within the date range for the volunteer's assigned \`team\` according to the \`teamsScheduleData\`.
-    d.  **No Double Booking:** A volunteer cannot be assigned to more than one position in the SAME event.
+3.  **Filling the Assignment Object:**
+    - **Successful:** If you find a volunteer who meets ALL criteria (2a, 2b, 2c, 2d), put their name in the \`volunteer\` field. Set the \`reason\` field to \`null\`.
+    - **Unsuccessful:** If NO volunteer can be found for a slot, set the \`volunteer\` field to \`null\`. Set the \`reason\` field to a SHORT, one-sentence explanation (e.g., "No available volunteers from the scheduled team.").
 
-3.  **Assignment Logic:**
-    - **Successful Assignment:** If you find a volunteer who meets ALL the constraints (2a, 2b, 2c, 2d), set their name in the \`volunteer\` field and set the \`reason\` field to \`null\`.
-    - **Failed Assignment:** If NO volunteer can be found who meets all the constraints for a specific slot, you MUST set the \`volunteer\` field to \`null\` and provide a concise, one-sentence \`reason\`.
-        - Examples for \`reason\`: "No volunteers available for this area.", "No available volunteers from the scheduled team.", "All qualified volunteers are already assigned."
+4.  **Area Filtering:**
+    - If a \`Specific Area Filter\` is provided, ONLY generate assignments for that specific area across all events.
+    - If no filter is provided, generate assignments for ALL areas required by the events.
 
-4.  **Filtering by Specific Area:**
-    - If the \`specificArea\` field is provided, you MUST ONLY generate assignments for that single area of service across all events.
-    - If \`specificArea\` is NOT provided, you MUST generate assignments for ALL areas listed in \`areasOfService\` that are required by the events.
+5.  **OUTPUT FORMAT (Strictly Enforced):**
+    - The output MUST be a raw JSON object.
+    - Do NOT include any text, comments, or markdown formatting outside of the JSON structure.
+    - The \`reason\` field must be a short, direct sentence, NOT your thought process.
 
-5.  **Output Format:**
-    - The final output must be a raw JSON object conforming to the schema.
-    - Do NOT include markdown formatting, comments, or any text outside the JSON structure.
-    - The \`reason\` field must be a short, direct sentence and MUST NOT contain your own thought process or reasoning.
-
-Create the \`assignments\` list now based on these rules.
+Generate the \`assignments\` list now.
 `,
 });
 
