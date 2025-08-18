@@ -17,7 +17,7 @@ import { ptBR } from 'date-fns/locale';
 
 import { smartScheduleGeneration } from '@/ai/flows/smart-schedule-generation';
 import { events as allEvents, volunteers, teamSchedules, areasOfService as allAreas } from '@/lib/data';
-import type { GeneratedSchedule, MonthlyEvent, Volunteer } from '@/lib/types';
+import type { GeneratedSchedule, MonthlyEvent, Volunteer, EventArea } from '@/lib/types';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const scheduleSchema = z.object({
@@ -261,49 +261,60 @@ export default function SchedulePage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {areasForTable.map(area => (
-                    <TableRow key={area.name}>
-                      <TableCell className="font-semibold sticky left-0 bg-background/95 backdrop-blur-sm w-[150px] z-10">{area.name}</TableCell>
-                      {monthlyEvents.map((event, index) => {
-                        const scheduleKey = `${event.uniqueName} - ${area.name}`;
-                        const volunteerName = schedule[scheduleKey];
-                        const needsVolunteer = event.areas.includes(area.name);
-                        const eligibleVolunteers = getEligibleVolunteers(area.name);
+                  {areasForTable.map(area => {
+                    // Determine the max number of volunteers needed for this area across all events in the month
+                    const maxVolunteers = Math.max(1, ...monthlyEvents.map(event =>
+                        event.areas.find(a => a.name === area.name)?.volunteersNeeded || 0
+                    ));
 
-                        if (!needsVolunteer) {
-                          return <TableCell key={index} className="bg-muted/30" />;
-                        }
-                        
-                        return (
-                          <TableCell key={index} className="text-center">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-auto p-1 text-left font-normal w-full justify-center">
-                                  <span className={volunteerName ? 'font-medium' : 'text-muted-foreground italic'}>
-                                      {volunteerName || 'Não alocado'}
-                                  </span>
-                                 </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="start">
-                                <DropdownMenuItem onClick={() => handleManualChange(scheduleKey, null)}>
-                                    Não alocado
-                                </DropdownMenuItem>
-                                {eligibleVolunteers.map(v => (
-                                   <DropdownMenuItem 
-                                      key={v.id} 
-                                      onClick={() => handleManualChange(scheduleKey, v.name)}
-                                      disabled={v.name === volunteerName}
-                                    >
-                                    {v.name}
-                                  </DropdownMenuItem>
-                                ))}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        );
-                      })}
-                    </TableRow>
-                  ))}
+                    return Array.from({ length: maxVolunteers }).map((_, i) => (
+                        <TableRow key={`${area.name}-${i}`}>
+                        <TableCell className="font-semibold sticky left-0 bg-background/95 backdrop-blur-sm w-[150px] z-10">
+                            {area.name} {maxVolunteers > 1 && `(${i + 1})`}
+                        </TableCell>
+                        {monthlyEvents.map((event, index) => {
+                            const eventAreaInfo = event.areas.find(a => a.name === area.name);
+                            const needsVolunteer = eventAreaInfo && eventAreaInfo.volunteersNeeded > i;
+                            
+                            if (!needsVolunteer) {
+                                return <TableCell key={index} className="bg-muted/30" />;
+                            }
+
+                            const scheduleKey = `${event.uniqueName} - ${area.name} - ${i + 1}`;
+                            const volunteerName = schedule[scheduleKey];
+                            const eligibleVolunteers = getEligibleVolunteers(area.name);
+                            
+                            return (
+                            <TableCell key={index} className="text-center">
+                                <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="h-auto p-1 text-left font-normal w-full justify-center">
+                                    <span className={volunteerName ? 'font-medium' : 'text-muted-foreground italic'}>
+                                        {volunteerName || 'Não alocado'}
+                                    </span>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="start">
+                                    <DropdownMenuItem onClick={() => handleManualChange(scheduleKey, null)}>
+                                        Não alocado
+                                    </DropdownMenuItem>
+                                    {eligibleVolunteers.map(v => (
+                                    <DropdownMenuItem 
+                                        key={v.id} 
+                                        onClick={() => handleManualChange(scheduleKey, v.name)}
+                                        disabled={v.name === volunteerName}
+                                        >
+                                        {v.name}
+                                    </DropdownMenuItem>
+                                    ))}
+                                </DropdownMenuContent>
+                                </DropdownMenu>
+                            </TableCell>
+                            );
+                        })}
+                        </TableRow>
+                    ));
+                  })}
                 </TableBody>
               </Table>
             </div>

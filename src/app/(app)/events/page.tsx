@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -16,12 +16,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { events as initialEvents, areasOfService } from '@/lib/data';
-import type { Event } from '@/lib/types';
+import type { Event, EventArea } from '@/lib/types';
 import { Textarea } from '@/components/ui/textarea';
 import { format, parseISO } from 'date-fns';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
+const eventAreaSchema = z.object({
+  name: z.string(),
+  volunteersNeeded: z.coerce.number().min(1, "Deve ser no mínimo 1").default(1),
+});
 
 const eventSchema = z.object({
   id: z.string().optional(),
@@ -30,7 +34,7 @@ const eventSchema = z.object({
   dayOfWeek: z.string().optional(),
   date: z.string().optional(),
   time: z.string().min(1, "Horário é obrigatório"),
-  areas: z.array(z.string()).min(1, "Selecione ao menos uma área"),
+  areas: z.array(eventAreaSchema).min(1, "Selecione ao menos uma área"),
   responsible: z.string().optional(),
   contact: z.string().optional(),
   observations: z.string().optional(),
@@ -61,6 +65,11 @@ export default function EventsPage() {
   const form = useForm<z.infer<typeof eventSchema>>({
     resolver: zodResolver(eventSchema),
     defaultValues: { name: '', frequency: 'Semanal', time: '', areas: [] },
+  });
+  
+  const { fields, append, remove, update } = useFieldArray({
+    control: form.control,
+    name: "areas"
   });
 
   const frequency = form.watch('frequency');
@@ -111,14 +120,15 @@ export default function EventsPage() {
 
 
   function onSubmit(data: z.infer<typeof eventSchema>) {
-    const formattedData = {
+    const formattedData: Event = {
         ...data,
+        id: selectedEvent ? selectedEvent.id : (events.length + 1).toString(),
         date: data.date ? format(new Date(data.date+'T12:00:00Z'), 'yyyy-MM-dd') : undefined,
     }
 
     if (selectedEvent) {
         // Edit
-        setEvents(events.map(e => e.id === selectedEvent.id ? { ...e, ...formattedData } : e));
+        setEvents(events.map(e => e.id === selectedEvent.id ? formattedData : e));
          toast({
             title: "Sucesso!",
             description: "Evento atualizado.",
@@ -126,11 +136,7 @@ export default function EventsPage() {
         });
     } else {
         // Add
-        const newEvent: Event = {
-            id: (events.length + 1).toString(),
-            ...formattedData,
-        };
-        setEvents([...events, newEvent]);
+        setEvents([...events, formattedData]);
          toast({
             title: "Sucesso!",
             description: "Novo evento adicionado.",
@@ -145,9 +151,25 @@ export default function EventsPage() {
   
   const handleSelectAllAreas = (checked: boolean) => {
     if (checked) {
-        form.setValue('areas', areasOfService.map(a => a.name));
+      const allAreaNames = areasOfService.map(a => a.name);
+      const currentAreaNames = selectedAreas.map(a => a.name);
+      const newAreas = allAreaNames.filter(name => !currentAreaNames.includes(name));
+      newAreas.forEach(name => append({ name, volunteersNeeded: 1 }));
     } else {
-        form.setValue('areas', []);
+      remove(); // removes all
+    }
+  };
+  
+  const handleAreaCheckedChange = (checked: boolean, areaName: string) => {
+    const areaIndex = selectedAreas.findIndex(a => a.name === areaName);
+    if (checked) {
+      if (areaIndex === -1) {
+        append({ name: areaName, volunteersNeeded: 1 });
+      }
+    } else {
+      if (areaIndex !== -1) {
+        remove(areaIndex);
+      }
     }
   };
 
@@ -190,8 +212,12 @@ export default function EventsPage() {
                     {event.frequency === 'Semanal' ? event.dayOfWeek : event.date ? format(new Date(event.date+'T12:00:00Z'), 'dd/MM/yyyy') : ''} às {event.time}
                   </TableCell>
                   <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {event.areas.map(area => <Badge key={area} variant="outline">{area}</Badge>)}
+                    <div className="flex flex-wrap gap-1 max-w-sm">
+                      {event.areas.map(area => 
+                        <Badge key={area.name} variant="outline">
+                          {area.name} ({area.volunteersNeeded})
+                        </Badge>
+                      )}
                     </div>
                   </TableCell>
                    <TableCell className="text-right">
@@ -286,7 +312,6 @@ export default function EventsPage() {
                 )}
               </div>
               
-              <FormField control={form.control} name="areas" render={() => (
                 <FormItem>
                     <div className="flex items-center justify-between">
                         <FormLabel>Áreas de Serviço Necessárias</FormLabel>
@@ -301,28 +326,41 @@ export default function EventsPage() {
                            </label>
                         </div>
                     </div>
-                    <div className="space-y-2 p-2 border rounded-md max-h-40 overflow-y-auto">
-                    {areasOfService.map((area) => (
-                        <FormField key={area.name} control={form.control} name="areas" render={({ field }) => (
-                        <FormItem key={area.name} className="flex flex-row items-start space-x-3 space-y-0">
-                            <FormControl>
-                            <Checkbox
-                                checked={field.value?.includes(area.name)}
-                                onCheckedChange={(checked) => {
-                                return checked
-                                    ? field.onChange([...(field.value || []), area.name])
-                                    : field.onChange(field.value?.filter((value) => value !== area.name));
-                                }}
-                            />
-                            </FormControl>
-                            <FormLabel className="font-normal">{area.name}</FormLabel>
-                        </FormItem>
-                        )} />
-                    ))}
+                    <div className="space-y-2 p-2 border rounded-md max-h-48 overflow-y-auto">
+                    {areasOfService.map((area) => {
+                      const areaIndex = selectedAreas.findIndex(a => a.name === area.name);
+                      const isChecked = areaIndex !== -1;
+                      return (
+                        <div key={area.name} className="flex items-center justify-between">
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                <FormControl>
+                                <Checkbox
+                                    checked={isChecked}
+                                    onCheckedChange={(checked) => handleAreaCheckedChange(checked as boolean, area.name)}
+                                />
+                                </FormControl>
+                                <FormLabel className="font-normal">{area.name}</FormLabel>
+                            </FormItem>
+                            {isChecked && (
+                                <FormField
+                                  control={form.control}
+                                  name={`areas.${areaIndex}.volunteersNeeded`}
+                                  render={({ field }) => (
+                                      <FormItem className="w-24">
+                                        <FormControl>
+                                            <Input type="number" min={1} {...field} />
+                                        </FormControl>
+                                        <FormMessage/>
+                                      </FormItem>
+                                  )}
+                                />
+                            )}
+                        </div>
+                      )
+                    })}
                     </div>
                     <FormMessage />
                 </FormItem>
-              )} />
               
                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField control={form.control} name="responsible" render={({ field }) => (

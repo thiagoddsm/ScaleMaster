@@ -16,7 +16,7 @@ import {z} from 'genkit';
 const SmartScheduleGenerationInputSchema = z.object({
   month: z.number().describe('The month for which to generate the schedule (1-12).'),
   year: z.number().describe('The year for which to generate the schedule.'),
-  eventsData: z.string().describe('JSON string of events data, each event containing name, areas, and date.'),
+  eventsData: z.string().describe('JSON string of events data, each event containing name, areas with volunteers needed, and date.'),
   volunteersData: z.string().describe('JSON string of volunteers data, each volunteer containing name, areas, availability, and team.'),
   teamsScheduleData: z.string().describe('JSON string of teams schedule data, assigning teams to date ranges.'),
   areasOfService: z.string().describe('JSON string of areas of service.'),
@@ -25,7 +25,7 @@ const SmartScheduleGenerationInputSchema = z.object({
 export type SmartScheduleGenerationInput = z.infer<typeof SmartScheduleGenerationInputSchema>;
 
 const SmartScheduleGenerationOutputSchema = z.object({
-  schedule: z.string().describe('JSON string of the generated schedule, mapping event and area to assigned volunteer.'),
+  schedule: z.string().describe('JSON string of the generated schedule, mapping event, area and position to assigned volunteer.'),
 });
 export type SmartScheduleGenerationOutput = z.infer<typeof SmartScheduleGenerationOutputSchema>;
 
@@ -39,7 +39,7 @@ const prompt = ai.definePrompt({
   output: {schema: SmartScheduleGenerationOutputSchema},
   prompt: `You are an AI scheduling assistant tasked with generating an optimal volunteer schedule for a set of events.
 
-You will be provided with data about events, volunteers, and team schedules. Your goal is to produce a JSON schedule that assigns the best-suited volunteer to each event and area of service.
+You will be provided with data about events, volunteers, and team schedules. Your goal is to produce a JSON schedule that assigns the best-suited volunteer to each event, area of service, and required position.
 {{#if specificArea}}
 You will generate the schedule ONLY for the following area: {{{specificArea}}}.
 {{else}}
@@ -54,6 +54,7 @@ Year: {{{year}}}
 
 Events Data:
 {{{eventsData}}}
+Each event in the data contains a list of areas and the number of volunteers needed for each area.
 
 Volunteers Data:
 {{{volunteersData}}}
@@ -70,19 +71,24 @@ Consider the following constraints and guidelines when generating the schedule:
 *   Volunteers should only be assigned to areas of service in which they are qualified.
 *   If team schedules are provided, volunteers should primarily be assigned to events that fall within their team's scheduled dates.
 *   Attempt to distribute assignments evenly among volunteers, to avoid overburdening any single individual.
-*   If a volunteer is not available leave value empty.
+*   A single volunteer cannot be assigned to two different positions in the same event.
+*   If an area requires more than one volunteer, you must assign different volunteers to each position.
+*   If a volunteer is not available or no suitable volunteer is found, leave the value for that position empty.
 
-Produce the schedule in JSON format. The JSON should have the following structure:
+Produce the schedule in JSON format. The JSON should have the following structure where the key includes the event name, area, and position number (from 1 to N, where N is the number of volunteers needed).
 
 {
-  "[Event Name] - [Area of Service]": "[Volunteer Name]"
+  "[Event Name] - [Area of Service] - 1": "[Volunteer Name]",
+  "[Event Name] - [Area of Service] - 2": "[Another Volunteer Name]",
+  ...
 }
 
 For example:
 
 {
-  "Sunday Service - Sound": "John Doe",
-  "Wednesday Service - Tech": "Jane Smith"
+  "Sunday Service - Sound - 1": "John Doe",
+  "Sunday Service - Reception - 1": "Jane Smith",
+  "Sunday Service - Reception - 2": "Peter Jones"
 }
 
 Ensure the JSON is valid and parsable.

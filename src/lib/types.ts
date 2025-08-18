@@ -8,6 +8,11 @@ export type Volunteer = {
   email?: string;
 };
 
+export type EventArea = {
+  name: string;
+  volunteersNeeded: number;
+};
+
 export type Event = {
   id: string;
   name: string;
@@ -15,7 +20,7 @@ export type Event = {
   dayOfWeek?: string;
   date?: string; // YYYY-MM-DD
   time: string;
-  areas: string[];
+  areas: EventArea[];
   responsible?: string;
   contact?: string;
   observations?: string;
@@ -44,6 +49,6 @@ export type GeneratedSchedule = {
 export type MonthlyEvent = {
   date: Date;
   name: string;
-  areas: string[];
+  areas: EventArea[];
   uniqueName: string;
 };
