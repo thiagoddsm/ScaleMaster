@@ -41,29 +41,3 @@ export type AreaOfService = {
   leader?: string;
   leaderPhone?: string;
 };
-
-export type ScheduleSlot = {
-    volunteer: string | null;
-    reason: string | null;
-};
-
-export type GeneratedSchedule = {
-  [key: string]: ScheduleSlot;
-};
-
-export type MonthlyEvent = {
-  date: Date;
-  name: string;
-  areas: EventArea[];
-  uniqueName: string;
-};
-
-export type SavedSchedule = {
-  id: string;
-  month: number;
-  year: number;
-  areaFilter: string;
-  createdAt: Date;
-  schedule: GeneratedSchedule;
-  monthlyEvents: MonthlyEvent[];
-};

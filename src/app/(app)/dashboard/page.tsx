@@ -70,24 +70,6 @@ export default function DashboardPage() {
       <div className="grid gap-6 md:grid-cols-2">
         <Card className="flex flex-col">
           <CardHeader>
-            <CardTitle>Gerar Nova Escala</CardTitle>
-            <CardDescription>Use nossa ferramenta inteligente para criar escalas otimizadas para seus eventos em minutos.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex-grow">
-            <p className="text-sm text-muted-foreground">
-              A geração de escala inteligente considera a disponibilidade, áreas de serviço e equipe de cada voluntário para criar a melhor combinação possível.
-            </p>
-          </CardContent>
-          <CardFooter>
-            <Button asChild>
-              <Link href="/schedule">
-                Gerar Escala <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardFooter>
-        </Card>
-        <Card className="flex flex-col">
-          <CardHeader>
             <CardTitle>Gerenciar Dados</CardTitle>
             <CardDescription>Adicione ou atualize informações de voluntários e eventos para manter tudo organizado.</CardDescription>
           </CardHeader>

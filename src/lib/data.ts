@@ -1,4 +1,4 @@
-import type { Volunteer, Event, Team, TeamSchedule, AreaOfService, SavedSchedule } from './types';
+import type { Volunteer, Event, Team, TeamSchedule, AreaOfService } from './types';
 
 export const areasOfService: AreaOfService[] = [
     { name: "Apoio" },
@@ -212,4 +212,4 @@ export const teamSchedules: TeamSchedule[] = [
 
 // This is a mock in-memory storage for saved schedules.
 // In a real app, this would be stored in a database.
-export const savedSchedules: SavedSchedule[] = [];
+export const savedSchedules: any[] = [];
