@@ -292,12 +292,12 @@ export default function SchedulePage() {
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
-              <Table className="min-w-full">
+              <Table className="min-w-full table-fixed">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="sticky left-0 bg-background/95 backdrop-blur-sm w-[150px] z-10">Área</TableHead>
+                    <TableHead className="sticky left-0 bg-background/95 backdrop-blur-sm z-10 w-[150px]">Área</TableHead>
                     {monthlyEvents.map((event, index) => (
-                      <TableHead key={index} className="text-center whitespace-nowrap capitalize">
+                      <TableHead key={index} className="text-center whitespace-nowrap capitalize w-40">
                         <div className="font-bold">{format(event.date, 'dd/MM')}</div>
                         <div className="text-xs font-normal">{format(event.date, 'EEEE', {locale: ptBR})}</div>
                         <div className="text-sm font-normal">{event.name}</div>
@@ -314,7 +314,7 @@ export default function SchedulePage() {
 
                     return Array.from({ length: maxVolunteers }).map((_, i) => (
                         <TableRow key={`${area.name}-${i}`}>
-                        <TableCell className="font-semibold sticky left-0 bg-background/95 backdrop-blur-sm w-[150px] z-10">
+                        <TableCell className="font-semibold sticky left-0 bg-background/95 backdrop-blur-sm z-10 w-[150px]">
                             {area.name} {maxVolunteers > 1 && `(${i + 1})`}
                         </TableCell>
                         {monthlyEvents.map((event, index) => {
@@ -385,5 +385,3 @@ export default function SchedulePage() {
     </div>
   );
 }
-
-    
