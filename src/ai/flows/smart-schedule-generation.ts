@@ -25,7 +25,7 @@ const SmartScheduleGenerationInputSchema = z.object({
 export type SmartScheduleGenerationInput = z.infer<typeof SmartScheduleGenerationInputSchema>;
 
 const SmartScheduleGenerationOutputSchema = z.object({
-  schedule: z.string().describe('JSON string of the generated schedule, mapping event, area and position to assigned volunteer.'),
+  schedule: z.string().describe('JSON string of the generated schedule. The key is "[Event Name] - [Area of Service] - [Position Number]". The value is an object with "volunteer" (string or null) and "reason" (string or null for why it was not assigned).'),
 });
 export type SmartScheduleGenerationOutput = z.infer<typeof SmartScheduleGenerationOutputSchema>;
 
@@ -73,22 +73,18 @@ Consider the following constraints and guidelines when generating the schedule:
 *   Attempt to distribute assignments evenly among volunteers, to avoid overburdening any single individual.
 *   A single volunteer cannot be assigned to two different positions in the same event.
 *   If an area requires more than one volunteer, you must assign different volunteers to each position.
-*   If a volunteer is not available or no suitable volunteer is found, leave the value for that position empty.
+*   If a volunteer is not available or no suitable volunteer is found, you MUST provide a reason. Set the 'volunteer' field to null and the 'reason' field to a brief explanation (e.g., "No volunteers available", "No one from the scheduled team is available", "Event does not require this area").
 
 Produce the schedule in JSON format. The JSON should have the following structure where the key includes the event name, area, and position number (from 1 to N, where N is the number of volunteers needed).
 
-{
-  "[Event Name] - [Area of Service] - 1": "[Volunteer Name]",
-  "[Event Name] - [Area of Service] - 2": "[Another Volunteer Name]",
-  ...
-}
+The value for each key must be an object: { "volunteer": "[Volunteer Name]" | null, "reason": "[Reason for no assignment]" | null }.
 
-For example:
+Example:
 
 {
-  "Sunday Service - Sound - 1": "John Doe",
-  "Sunday Service - Reception - 1": "Jane Smith",
-  "Sunday Service - Reception - 2": "Peter Jones"
+  "Sunday Service - Sound - 1": { "volunteer": "John Doe", "reason": null },
+  "Sunday Service - Reception - 1": { "volunteer": "Jane Smith", "reason": null },
+  "Sunday Service - Reception - 2": { "volunteer": null, "reason": "No available volunteers" }
 }
 
 Ensure the JSON is valid and parsable.

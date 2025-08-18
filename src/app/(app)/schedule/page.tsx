@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { getDaysInMonth, startOfMonth, format, parseISO } from 'date-fns';
+import { getDaysInMonth, startOfMonth, format, parseISO, set } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import { smartScheduleGeneration } from '@/ai/flows/smart-schedule-generation';
@@ -36,39 +36,42 @@ const weekDaysMap: { [key: string]: number } = {
 };
 
 const getEventsForMonth = (month: number, year: number): MonthlyEvent[] => {
-    const monthlyEvents: MonthlyEvent[] = [];
-    const daysInMonth = getDaysInMonth(new Date(year, month - 1));
-    const firstDayOfMonth = startOfMonth(new Date(year, month - 1));
+  const monthlyEvents: MonthlyEvent[] = [];
+  const daysInMonth = getDaysInMonth(new Date(year, month - 1));
 
-    for (let day = 1; day <= daysInMonth; day++) {
-        const currentDate = new Date(year, month - 1, day);
-        const currentDayOfWeek = currentDate.getDay();
+  for (let day = 1; day <= daysInMonth; day++) {
+    const currentDate = new Date(Date.UTC(year, month - 1, day));
+    const currentDayOfWeek = currentDate.getUTCDay();
 
-        allEvents.forEach(event => {
-            let eventHappensToday = false;
-            if (event.frequency === 'Semanal') {
-                if (weekDaysMap[event.dayOfWeek!] === currentDayOfWeek) {
-                    eventHappensToday = true;
-                }
-            } else if (event.frequency === 'Pontual' && event.date) {
-                const eventDate = parseISO(event.date + 'T12:00:00Z');
-                if (eventDate.getUTCDate() === day && eventDate.getUTCMonth() === month - 1 && eventDate.getUTCFullYear() === year) {
-                    eventHappensToday = true;
-                }
-            }
+    allEvents.forEach(event => {
+      let eventHappensToday = false;
+      const [hours, minutes] = event.time.split(':').map(Number);
+      const eventDateWithTime = set(currentDate, { hours, minutes, seconds: 0, milliseconds: 0 });
 
-            if (eventHappensToday) {
-                const formattedDate = format(currentDate, 'dd/MM');
-                monthlyEvents.push({
-                    date: currentDate,
-                    name: event.name,
-                    areas: event.areas,
-                    uniqueName: `${event.name} - ${formattedDate}`
-                });
-            }
+      if (event.frequency === 'Semanal') {
+        if (weekDaysMap[event.dayOfWeek!] === currentDayOfWeek) {
+          eventHappensToday = true;
+        }
+      } else if (event.frequency === 'Pontual' && event.date) {
+        // Dates in `data.ts` are local, but we parse them as UTC to be safe
+        const eventDate = parseISO(event.date + 'T00:00:00.000Z');
+        if (eventDate.getUTCDate() === day && eventDate.getUTCMonth() === month - 1 && eventDate.getUTCFullYear() === year) {
+          eventHappensToday = true;
+        }
+      }
+
+      if (eventHappensToday) {
+        const formattedDate = format(eventDateWithTime, 'dd/MM');
+        monthlyEvents.push({
+          date: eventDateWithTime,
+          name: event.name,
+          areas: event.areas,
+          uniqueName: `${event.name} - ${formattedDate}`
         });
-    }
-    return monthlyEvents.sort((a,b) => a.date.getTime() - b.date.getTime());
+      }
+    });
+  }
+  return monthlyEvents.sort((a,b) => a.date.getTime() - b.date.getTime());
 };
 
 
@@ -106,11 +109,12 @@ export default function SchedulePage() {
     setSchedule(prev => {
         if (!prev) return null;
         const newSchedule = {...prev};
-        if (volunteerName === null) {
-            newSchedule[scheduleKey] = ''; // Set to empty or some placeholder for 'unassigned'
-        } else {
-            newSchedule[scheduleKey] = volunteerName;
-        }
+        
+        newSchedule[scheduleKey] = {
+            volunteer: volunteerName,
+            reason: volunteerName ? null : "Manualmente removido"
+        };
+        
         return newSchedule;
     });
   };
@@ -281,17 +285,22 @@ export default function SchedulePage() {
                             }
 
                             const scheduleKey = `${event.uniqueName} - ${area.name} - ${i + 1}`;
-                            const volunteerName = schedule[scheduleKey];
+                            const scheduleSlot = schedule[scheduleKey];
+                            const volunteerName = scheduleSlot?.volunteer;
+                            const reason = scheduleSlot?.reason;
                             const eligibleVolunteers = getEligibleVolunteers(area.name);
                             
                             return (
                             <TableCell key={index} className="text-center">
                                 <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" className="h-auto p-1 text-left font-normal w-full justify-center">
+                                    <Button variant="ghost" className="h-auto p-1 text-left font-normal w-full justify-center flex-col">
                                     <span className={volunteerName ? 'font-medium' : 'text-muted-foreground italic'}>
                                         {volunteerName || 'Não alocado'}
                                     </span>
+                                     {reason && (
+                                        <span className="text-xs text-muted-foreground italic">({reason})</span>
+                                    )}
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="start">

@@ -42,8 +42,13 @@ export type AreaOfService = {
   leaderPhone?: string;
 };
 
+export type ScheduleSlot = {
+    volunteer: string | null;
+    reason: string | null;
+};
+
 export type GeneratedSchedule = {
-  [key: string]: string;
+  [key: string]: ScheduleSlot;
 };
 
 export type MonthlyEvent = {
