@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from 'react';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -17,10 +17,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { volunteers as initialVolunteers, teams, areasOfService, events } from '@/lib/data';
 import type { Volunteer } from '@/lib/types';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+
 
 const availabilityItems = Array.from(new Set(events.map(e => e.name)));
 
 const volunteerSchema = z.object({
+  id: z.string().optional(),
   name: z.string().min(1, "Nome é obrigatório"),
   team: z.string().min(1, "Equipe é obrigatória"),
   areas: z.array(z.string()).min(1, "Selecione ao menos uma área"),
@@ -32,32 +36,69 @@ const volunteerSchema = z.object({
 export default function VolunteersPage() {
   const [volunteers, setVolunteers] = useState<Volunteer[]>(initialVolunteers);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof volunteerSchema>>({
     resolver: zodResolver(volunteerSchema),
-    defaultValues: {
-      name: '',
-      team: '',
-      areas: [],
-      availability: [],
-      phone: '',
-      email: '',
-    },
+    defaultValues: { name: '', team: '', areas: [], availability: [], phone: '', email: '' },
   });
+  
+  function handleAdd() {
+    setSelectedVolunteer(null);
+    form.reset({ name: '', team: '', areas: [], availability: [], phone: '', email: '' });
+    setIsDialogOpen(true);
+  }
+
+  function handleEdit(volunteer: Volunteer) {
+    setSelectedVolunteer(volunteer);
+    form.reset(volunteer);
+    setIsDialogOpen(true);
+  }
+
+  function handleDelete(volunteer: Volunteer) {
+    setSelectedVolunteer(volunteer);
+    setIsDeleteDialogOpen(true);
+  }
+
+  function confirmDelete() {
+    if (selectedVolunteer) {
+        setVolunteers(volunteers.filter(v => v.id !== selectedVolunteer.id));
+        toast({
+            title: "Sucesso!",
+            description: "Voluntário excluído.",
+        });
+        setIsDeleteDialogOpen(false);
+        setSelectedVolunteer(null);
+    }
+  }
 
   function onSubmit(data: z.infer<typeof volunteerSchema>) {
-    const newVolunteer: Volunteer = {
-      id: (volunteers.length + 1).toString(),
-      ...data,
-    };
-    setVolunteers([...volunteers, newVolunteer]);
-    toast({
-      title: "Sucesso!",
-      description: "Novo voluntário adicionado.",
-      className: "bg-primary text-primary-foreground",
-    });
+    if (selectedVolunteer) {
+        // Edit
+        setVolunteers(volunteers.map(v => v.id === selectedVolunteer.id ? { ...v, ...data } : v));
+        toast({
+            title: "Sucesso!",
+            description: "Voluntário atualizado.",
+            className: "bg-primary text-primary-foreground",
+        });
+    } else {
+        // Add
+        const newVolunteer: Volunteer = {
+            id: (volunteers.length + 1).toString(),
+            ...data,
+        };
+        setVolunteers([...volunteers, newVolunteer]);
+        toast({
+            title: "Sucesso!",
+            description: "Novo voluntário adicionado.",
+            className: "bg-primary text-primary-foreground",
+        });
+    }
+    
     setIsDialogOpen(false);
+    setSelectedVolunteer(null);
     form.reset();
   }
   
@@ -74,7 +115,7 @@ export default function VolunteersPage() {
             <CardTitle>Lista de Voluntários</CardTitle>
             <CardDescription>Todos os voluntários cadastrados no sistema.</CardDescription>
           </div>
-          <Button onClick={() => setIsDialogOpen(true)}>
+          <Button onClick={handleAdd}>
             <PlusCircle className="mr-2 h-4 w-4" />
             Adicionar Voluntário
           </Button>
@@ -88,6 +129,7 @@ export default function VolunteersPage() {
                 <TableHead>Áreas de Serviço</TableHead>
                 <TableHead>Disponibilidade</TableHead>
                 <TableHead>Contato</TableHead>
+                <TableHead className="w-20 text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -111,6 +153,24 @@ export default function VolunteersPage() {
                       <div>{volunteer.phone}</div>
                     </div>
                   </TableCell>
+                   <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Abrir menu</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleEdit(volunteer)}>
+                           <Edit className="mr-2 h-4 w-4" /> Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDelete(volunteer)} className="text-destructive">
+                           <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -121,8 +181,8 @@ export default function VolunteersPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[625px]">
           <DialogHeader>
-            <DialogTitle>Adicionar Novo Voluntário</DialogTitle>
-            <DialogDescription>Preencha os dados do novo voluntário.</DialogDescription>
+            <DialogTitle>{selectedVolunteer ? 'Editar Voluntário' : 'Adicionar Novo Voluntário'}</DialogTitle>
+            <DialogDescription>Preencha os dados do voluntário.</DialogDescription>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -175,7 +235,7 @@ export default function VolunteersPage() {
                                     checked={field.value?.includes(area.name)}
                                     onCheckedChange={(checked) => {
                                     return checked
-                                        ? field.onChange([...field.value, area.name])
+                                        ? field.onChange([...(field.value || []), area.name])
                                         : field.onChange(field.value?.filter((value) => value !== area.name));
                                     }}
                                 />
@@ -200,7 +260,7 @@ export default function VolunteersPage() {
                                     checked={field.value?.includes(item)}
                                     onCheckedChange={(checked) => {
                                     return checked
-                                        ? field.onChange([...field.value, item])
+                                        ? field.onChange([...(field.value || []), item])
                                         : field.onChange(field.value?.filter((value) => value !== item));
                                     }}
                                 />
@@ -216,12 +276,27 @@ export default function VolunteersPage() {
               </div>
               <DialogFooter>
                 <DialogClose asChild><Button type="button" variant="secondary">Cancelar</Button></DialogClose>
-                <Button type="submit">Salvar Voluntário</Button>
+                <Button type="submit">Salvar</Button>
               </DialogFooter>
             </form>
           </Form>
         </DialogContent>
       </Dialog>
+      
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Essa ação não pode ser desfeita. Isso excluirá permanentemente o voluntário.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Continuar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
