@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, CalendarCheck, CalendarPlus, Users, Shield, Construction } from 'lucide-react';
-import { events, volunteers } from '@/lib/data';
+import { events, volunteers, areasOfService, teams } from '@/lib/data';
 
 export default function DashboardPage() {
   const upcomingEvents = events.filter(e => e.date && new Date(e.date) > new Date()).length;
@@ -14,7 +14,7 @@ export default function DashboardPage() {
         <p className="text-muted-foreground">Visão geral do seu gerenciador de escalas.</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <Card className="bg-card/80 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle className="text-sm font-medium">Total de Voluntários</CardTitle>
@@ -33,6 +33,26 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{events.length}</div>
             <p className="text-xs text-muted-foreground">eventos fixos e pontuais</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-card/80 backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-sm font-medium">Áreas de Serviço</CardTitle>
+            <Construction className="w-4 h-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{areasOfService.length}</div>
+            <p className="text-xs text-muted-foreground">áreas cadastradas</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-card/80 backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-sm font-medium">Total de Equipes</CardTitle>
+            <Shield className="w-4 h-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{teams.length}</div>
+            <p className="text-xs text-muted-foreground">equipes cadastradas</p>
           </CardContent>
         </Card>
         <Card className="bg-card/80 backdrop-blur-sm">
