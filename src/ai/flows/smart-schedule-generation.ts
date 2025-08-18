@@ -26,8 +26,8 @@ const AssignmentSchema = z.object({
   eventUniqueName: z.string().describe('The unique name of the event, in the format "[Event Name] - [dd/MM]".'),
   area: z.string().describe('The area of service for the assignment.'),
   position: z.number().describe('The position number for the assignment (e.g., 1, 2, 3).'),
-  volunteer: z.string().nullable().describe('The name of the assigned volunteer, or null if no one was assigned.'),
-  reason: z.string().nullable().describe('The reason for the assignment outcome, especially if a volunteer could not be assigned.'),
+  volunteer: z.string().nullable().optional().describe('The name of the assigned volunteer, or null if no one was assigned.'),
+  reason: z.string().nullable().optional().describe('The reason for the assignment outcome, especially if a volunteer could not be assigned.'),
 });
 
 const SmartScheduleGenerationOutputSchema = z.object({

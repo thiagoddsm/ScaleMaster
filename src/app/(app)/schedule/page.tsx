@@ -182,8 +182,8 @@ export default function SchedulePage() {
         result.assignments.forEach(assignment => {
             const key = `${assignment.eventUniqueName} - ${assignment.area} - ${assignment.position}`;
             generatedSchedule[key] = {
-                volunteer: assignment.volunteer,
-                reason: assignment.reason,
+                volunteer: assignment.volunteer ?? null,
+                reason: assignment.reason ?? (assignment.volunteer ? null : "Não foi possível alocar"),
             };
         });
         
