@@ -76,12 +76,15 @@ export default function DashboardPage() {
               Mantenha os dados sempre atualizados para garantir que as escalas sejam geradas com as informações mais recentes.
             </p>
           </CardContent>
-          <CardFooter className="flex gap-2">
+          <CardFooter className="flex flex-wrap gap-2">
             <Button asChild variant="secondary">
               <Link href="/volunteers">Gerenciar Voluntários</Link>
             </Button>
             <Button asChild variant="secondary">
               <Link href="/events">Gerenciar Eventos</Link>
+            </Button>
+            <Button asChild variant="secondary">
+              <Link href="/areas">Gerenciar Áreas</Link>
             </Button>
           </CardFooter>
         </Card>
