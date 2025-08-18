@@ -40,8 +40,8 @@ const getEventsForMonth = (month: number, year: number): MonthlyEvent[] => {
   const daysInMonth = getDaysInMonth(new Date(year, month - 1));
 
   for (let day = 1; day <= daysInMonth; day++) {
-    const currentDate = new Date(Date.UTC(year, month - 1, day));
-    const currentDayOfWeek = currentDate.getUTCDay();
+    const currentDate = new Date(year, month - 1, day);
+    const currentDayOfWeek = currentDate.getDay();
 
     allEvents.forEach(event => {
       let eventHappensToday = false;
@@ -53,9 +53,8 @@ const getEventsForMonth = (month: number, year: number): MonthlyEvent[] => {
           eventHappensToday = true;
         }
       } else if (event.frequency === 'Pontual' && event.date) {
-        // Dates in `data.ts` are local, but we parse them as UTC to be safe
-        const eventDate = parseISO(event.date + 'T00:00:00.000Z');
-        if (eventDate.getUTCDate() === day && eventDate.getUTCMonth() === month - 1 && eventDate.getUTCFullYear() === year) {
+        const eventDate = parseISO(event.date); // Already in local time
+        if (eventDate.getDate() === day && eventDate.getMonth() === month - 1 && eventDate.getFullYear() === year) {
           eventHappensToday = true;
         }
       }
@@ -297,7 +296,7 @@ export default function SchedulePage() {
                   <TableRow>
                     <TableHead className="sticky left-0 bg-background/95 backdrop-blur-sm w-[150px] z-10">Área</TableHead>
                     {monthlyEvents.map((event, index) => (
-                      <TableHead key={index} className="text-center whitespace-nowrap">
+                      <TableHead key={index} className="text-center whitespace-nowrap capitalize">
                         <div className="font-bold">{format(event.date, 'dd/MM')}</div>
                         <div className="text-xs font-normal">{format(event.date, 'EEEE', {locale: ptBR})}</div>
                         <div className="text-sm font-normal">{event.name}</div>
@@ -385,3 +384,5 @@ export default function SchedulePage() {
     </div>
   );
 }
+
+    
