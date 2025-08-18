@@ -11,13 +11,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Save } from 'lucide-react';
 import { getDaysInMonth, startOfMonth, format, parseISO, set } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import { smartScheduleGeneration } from '@/ai/flows/smart-schedule-generation';
-import { events as allEvents, volunteers, teamSchedules, areasOfService as allAreas } from '@/lib/data';
-import type { GeneratedSchedule, MonthlyEvent, Volunteer, EventArea } from '@/lib/types';
+import { events as allEvents, volunteers, teamSchedules, areasOfService as allAreas, savedSchedules } from '@/lib/data';
+import type { GeneratedSchedule, MonthlyEvent, Volunteer, EventArea, SavedSchedule } from '@/lib/types';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const scheduleSchema = z.object({
@@ -116,6 +116,33 @@ export default function SchedulePage() {
         };
         
         return newSchedule;
+    });
+  };
+
+  const handleSaveSchedule = () => {
+    if (!schedule || !monthlyEvents.length) {
+      toast({ variant: 'destructive', title: 'Erro', description: 'Não há escala para salvar.' });
+      return;
+    }
+    const { month, year } = form.getValues();
+    const newSavedSchedule: SavedSchedule = {
+      id: `${year}-${month}-${new Date().getTime()}`,
+      month: parseInt(month),
+      year: parseInt(year),
+      areaFilter: selectedArea === 'all' ? 'Todas' : selectedArea!,
+      createdAt: new Date(),
+      schedule,
+      monthlyEvents,
+    };
+    
+    // In a real app, this would be an API call.
+    // For this prototype, we're pushing to an in-memory array.
+    savedSchedules.push(newSavedSchedule);
+    
+    toast({
+      title: 'Escala Salva!',
+      description: `A escala de ${months.find(m => m.value === month)?.label} de ${year} foi salva.`,
+      className: "bg-primary text-primary-foreground",
     });
   };
   
@@ -243,11 +270,17 @@ export default function SchedulePage() {
 
       {schedule && monthlyEvents.length > 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle>Escala Gerada</CardTitle>
-            <CardDescription>
-              Escala de {months.find(m => m.value === form.getValues().month)?.label} de {form.getValues().year}. Clique em um voluntário para editar.
-            </CardDescription>
+           <CardHeader className="flex-row items-center justify-between">
+            <div>
+              <CardTitle>Escala Gerada</CardTitle>
+              <CardDescription>
+                Escala de {months.find(m => m.value === form.getValues().month)?.label} de {form.getValues().year}. Clique em um voluntário para editar.
+              </CardDescription>
+            </div>
+             <Button onClick={handleSaveSchedule} variant="outline">
+                <Save className="mr-2 h-4 w-4" />
+                Salvar Escala
+             </Button>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">

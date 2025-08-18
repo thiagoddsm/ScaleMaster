@@ -57,3 +57,13 @@ export type MonthlyEvent = {
   areas: EventArea[];
   uniqueName: string;
 };
+
+export type SavedSchedule = {
+  id: string;
+  month: number;
+  year: number;
+  areaFilter: string;
+  createdAt: Date;
+  schedule: GeneratedSchedule;
+  monthlyEvents: MonthlyEvent[];
+};

@@ -1,4 +1,4 @@
-import type { Volunteer, Event, Team, TeamSchedule, AreaOfService } from './types';
+import type { Volunteer, Event, Team, TeamSchedule, AreaOfService, SavedSchedule } from './types';
 
 export const areasOfService: AreaOfService[] = [
     { name: "Apoio" },
@@ -34,22 +34,22 @@ export const teams: Team[] = [
 
 export const volunteers: Volunteer[] = [
   // Som - 4 volunteers
-  { id: '1', name: 'Lucas Cunha', team: 'Alpha', areas: ['Som'], availability: ['Culto da família', 'Culto da noite'] },
-  { id: '2', name: 'Marcelo Daniel', team: 'Bravo', areas: ['Som'], availability: ['Culto clássico', 'Culto da tarde'] },
+  { id: '1', name: 'Lucas Cunha', team: 'Alpha', areas: ['Som'], availability: ['Culto da família', 'Culto da noite', 'Santa Ceia'] },
+  { id: '2', name: 'Marcelo Daniel', team: 'Bravo', areas: ['Som'], availability: ['Culto clássico', 'Culto da tarde', 'Culto de Oração'] },
   { id: '3', name: 'Ramon Abdias', team: 'Charlie', areas: ['Som', 'Live'], availability: ['Culto da família', 'Culto propósitos'] },
   { id: '4', name: 'Sérgio Ricardo', team: 'Delta', areas: ['Som'], availability: ['Culto da noite'] },
 
   // Recepção - 4 volunteers
   { id: '5', name: 'Ana Cristina Leal', team: 'Alpha', areas: ['Recepção'], availability: ['Culto clássico', 'Culto da família'] },
-  { id: '6', name: 'Carlos Borges Junior', team: 'Bravo', areas: ['Recepção', 'Estacionamento'], availability: ['Culto da tarde', 'Culto da noite'] },
+  { id: '6', name: 'Carlos Borges Junior', team: 'Bravo', areas: ['Recepção', 'Estacionamento'], availability: ['Culto da tarde', 'Culto da noite', 'Batismo'] },
   { id: '7', name: 'Daniele Sota', team: 'Charlie', areas: ['Recepção'], availability: ['Culto da família'] },
-  { id: '8', name: 'Gisele Rocha', team: 'Delta', areas: ['Recepção', 'Projeção'], availability: ['Culto propósitos'] },
+  { id: '8', name: 'Gisele Rocha', team: 'Delta', areas: ['Recepção', 'Projeção'], availability: ['Culto propósitos', 'Santa Ceia'] },
 
   // Musikids - 4 volunteers
   { id: '9', name: 'Andressa Roza', team: 'Alpha', areas: ['Musikids'], availability: ['Culto da família'] },
   { id: '10', name: 'Filipe Sant\'Anna', team: 'Bravo', areas: ['Musikids', 'Som'], availability: ['Culto da família'] },
   { id: '11', name: 'Isabelle Nunes', team: 'Charlie', areas: ['Musikids'], availability: ['Culto da família', 'Culto da noite'] },
-  { id: '12', name: 'Raphael Roza', team: 'Delta', areas: ['Musikids'], availability: ['Culto da família'] },
+  { id: '12', name: 'Raphael Roza', team: 'Delta', areas: ['Musikids'], availability: ['Culto da família', 'Culto de Oração'] },
 
   // Broadcasting - 4 volunteers
   { id: '13', name: 'Filipe Nunes', team: 'Alpha', areas: ['Broadcasting'], availability: ['Culto da família', 'Culto da noite'] },
@@ -59,8 +59,8 @@ export const volunteers: Volunteer[] = [
   
   // Apoio - 4 volunteers
   { id: '17', name: 'Arislédio Ferreira', team: 'Alpha', areas: ['Apoio'], availability: ['Culto clássico', 'Culto da família'] },
-  { id: '18', name: 'Carlos Thurler', team: 'Bravo', areas: ['Apoio'], availability: ['Culto da tarde', 'Culto da noite'] },
-  { id: '19', name: 'Deyvson Caetano', team: 'Charlie', areas: ['Apoio'], availability: ['Culto da família', 'Culto propósitos'] },
+  { id: '18', name: 'Carlos Thurler', team: 'Bravo', areas: ['Apoio'], availability: ['Culto da tarde', 'Culto da noite', 'Santa Ceia'] },
+  { id: '19', name: 'Deyvson Caetano', team: 'Charlie', areas: ['Apoio'], availability: ['Culto da família', 'Culto propósitos', 'Batismo'] },
   { id: '20', name: 'Fabio Sota', team: 'Delta', areas: ['Apoio'], availability: ['Culto da noite'] },
 ];
 
@@ -154,6 +154,45 @@ export const events: Event[] = [
     ],
     responsible: 'Líder de Oração',
   },
+  {
+    id: '6',
+    name: 'Santa Ceia',
+    frequency: 'Pontual',
+    date: '2024-07-07',
+    time: '10:00',
+    areas: [
+      { name: 'Som', volunteersNeeded: 1 },
+      { name: 'Projeção', volunteersNeeded: 1 },
+      { name: 'Apoio', volunteersNeeded: 6 },
+    ],
+    responsible: 'Pastor Sênior',
+    observations: 'Evento especial, requer mais apoio.'
+  },
+  {
+    id: '7',
+    name: 'Culto de Oração',
+    frequency: 'Pontual',
+    date: '2024-07-15',
+    time: '19:00',
+    areas: [
+      { name: 'Som', volunteersNeeded: 1 },
+      { name: 'Apoio', volunteersNeeded: 2 },
+    ],
+    responsible: 'Líder de Oração',
+  },
+  {
+    id: '8',
+    name: 'Batismo',
+    frequency: 'Pontual',
+    date: '2024-08-25',
+    time: '15:00',
+    areas: [
+      { name: 'Recepção', volunteersNeeded: 3 },
+      { name: 'Apoio', volunteersNeeded: 4 },
+      { name: 'Fotografia', volunteersNeeded: 1 },
+    ],
+    responsible: 'Pastor Sênior',
+  },
 ];
 
 export const teamSchedules: TeamSchedule[] = [
@@ -170,3 +209,7 @@ export const teamSchedules: TeamSchedule[] = [
     { team: 'Charlie', startDate: '2024-09-16', endDate: '2024-09-22'},
     { team: 'Delta', startDate: '2024-09-23', endDate: '2024-09-29'},
 ];
+
+// This is a mock in-memory storage for saved schedules.
+// In a real app, this would be stored in a database.
+export const savedSchedules: SavedSchedule[] = [];

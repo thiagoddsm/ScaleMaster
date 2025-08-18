@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Blocks, Calendar, CalendarCheck, CalendarPlus, LayoutDashboard, Users, Construction, Shield, ChevronDown } from 'lucide-react';
+import { Blocks, Calendar, CalendarCheck, CalendarPlus, LayoutDashboard, Users, Construction, Shield, ChevronDown, Archive } from 'lucide-react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger, SidebarInset, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem } from '@/components/ui/sidebar';
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -15,6 +15,7 @@ const menuItems = [
     icon: Calendar,
     subItems: [
         { href: '/schedule', label: 'Gerar Escala', icon: CalendarCheck },
+        { href: '/schedule/saved', label: 'Escalas Salvas', icon: Archive },
     ]
   },
   { href: '/volunteers', label: 'Voluntários', icon: Users },
@@ -25,6 +26,8 @@ const menuItems = [
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+
+  const isScheduleRoute = pathname.startsWith('/schedule');
 
   return (
     <SidebarProvider>
@@ -41,7 +44,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <SidebarMenu>
             {menuItems.map((item) => (
                item.subItems ? (
-                 <Collapsible key={item.label} className="w-full" defaultOpen={item.subItems.some(sub => pathname.startsWith(sub.href))}>
+                 <Collapsible key={item.label} className="w-full" defaultOpen={item.href === '/schedule' ? isScheduleRoute : item.subItems.some(sub => pathname.startsWith(sub.href))}>
                     <SidebarMenuItem>
                         <CollapsibleTrigger asChild>
                              <SidebarMenuButton 
@@ -61,7 +64,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                         <SidebarMenuSub>
                             {item.subItems.map(subItem => (
                                 <SidebarMenuSubItem key={subItem.href}>
-                                    <SidebarMenuSubButton asChild isActive={pathname.startsWith(subItem.href)}>
+                                    <SidebarMenuSubButton asChild isActive={pathname === subItem.href}>
                                         <Link href={subItem.href}>
                                             <subItem.icon />
                                             <span>{subItem.label}</span>
