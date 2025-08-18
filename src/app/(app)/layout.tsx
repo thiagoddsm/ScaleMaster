@@ -3,13 +3,20 @@
 import * as React from "react"
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Blocks, CalendarCheck, CalendarPlus, LayoutDashboard, Users, Construction, Shield } from 'lucide-react';
-import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
+import { Blocks, Calendar, CalendarCheck, CalendarPlus, LayoutDashboard, Users, Construction, Shield, ChevronDown } from 'lucide-react';
+import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger, SidebarInset, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem } from '@/components/ui/sidebar';
 import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const menuItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/schedule', label: 'Gerar Escala', icon: CalendarCheck },
+  { 
+    label: 'Escalas', 
+    icon: Calendar,
+    subItems: [
+        { href: '/schedule', label: 'Gerar Escala', icon: CalendarCheck },
+    ]
+  },
   { href: '/volunteers', label: 'Voluntários', icon: Users },
   { href: '/events', label: 'Eventos', icon: CalendarPlus },
   { href: '/areas', label: 'Áreas de Serviço', icon: Construction },
@@ -33,21 +40,55 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <SidebarContent>
           <SidebarMenu>
             {menuItems.map((item) => (
-              <SidebarMenuItem key={item.href}>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname.startsWith(item.href)}
-                  tooltip={{
-                    children: item.label,
-                    className: "bg-primary text-primary-foreground",
-                  }}
-                >
-                  <Link href={item.href}>
-                    <item.icon />
-                    <span>{item.label}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+               item.subItems ? (
+                 <Collapsible key={item.label} className="w-full" defaultOpen={item.subItems.some(sub => pathname.startsWith(sub.href))}>
+                    <SidebarMenuItem>
+                        <CollapsibleTrigger asChild>
+                             <SidebarMenuButton 
+                                variant="ghost" 
+                                className="w-full justify-between"
+                                isActive={item.subItems.some(sub => pathname.startsWith(sub.href))}
+                             >
+                                <div className="flex items-center gap-2">
+                                    <item.icon />
+                                    <span>{item.label}</span>
+                                </div>
+                                <ChevronDown className="h-4 w-4 transition-transform data-[state=open]:rotate-180" />
+                            </SidebarMenuButton>
+                        </CollapsibleTrigger>
+                    </SidebarMenuItem>
+                    <CollapsibleContent>
+                        <SidebarMenuSub>
+                            {item.subItems.map(subItem => (
+                                <SidebarMenuSubItem key={subItem.href}>
+                                    <SidebarMenuSubButton asChild isActive={pathname.startsWith(subItem.href)}>
+                                        <Link href={subItem.href}>
+                                            <subItem.icon />
+                                            <span>{subItem.label}</span>
+                                        </Link>
+                                    </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                            ))}
+                        </SidebarMenuSub>
+                    </CollapsibleContent>
+                 </Collapsible>
+               ) : (
+                <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton
+                    asChild
+                    isActive={pathname.startsWith(item.href)}
+                    tooltip={{
+                        children: item.label,
+                        className: "bg-primary text-primary-foreground",
+                    }}
+                    >
+                    <Link href={item.href}>
+                        <item.icon />
+                        <span>{item.label}</span>
+                    </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+               )
             ))}
           </SidebarMenu>
         </SidebarContent>
