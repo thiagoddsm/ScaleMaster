@@ -33,6 +33,8 @@ export type TeamSchedule = {
 
 export type AreaOfService = {
   name: string;
+  leader?: string;
+  leaderPhone?: string;
 };
 
 export type GeneratedSchedule = {

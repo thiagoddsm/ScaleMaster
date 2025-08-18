@@ -30,7 +30,6 @@ export const teams: Team[] = [
   { name: 'Bravo' },
   { name: 'Charlie' },
   { name: 'Delta' },
-  { name: 'N/A' },
 ];
 
 export const volunteers: Volunteer[] = [

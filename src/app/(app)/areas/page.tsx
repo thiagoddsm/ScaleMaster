@@ -1,7 +1,8 @@
 "use client"
 
 import React, { useState } from 'react';
-import { PlusCircle, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
+import Link from 'next/link';
+import { PlusCircle, MoreHorizontal, Edit, Trash2, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -20,6 +21,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 
 const areaSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
+  leader: z.string().optional(),
+  leaderPhone: z.string().optional(),
 });
 
 export default function AreasPage() {
@@ -31,12 +34,12 @@ export default function AreasPage() {
 
   const form = useForm<z.infer<typeof areaSchema>>({
     resolver: zodResolver(areaSchema),
-    defaultValues: { name: '' },
+    defaultValues: { name: '', leader: '', leaderPhone: '' },
   });
 
   function handleAdd() {
     setSelectedArea(null);
-    form.reset({ name: '' });
+    form.reset({ name: '', leader: '', leaderPhone: '' });
     setIsDialogOpen(true);
   }
 
@@ -66,7 +69,7 @@ export default function AreasPage() {
   function onSubmit(data: z.infer<typeof areaSchema>) {
     if (selectedArea) {
       // Edit
-      setAreas(areas.map((a) => a.name === selectedArea.name ? data : a));
+      setAreas(areas.map((a) => a.name === selectedArea.name ? { ...a, ...data } : a));
        toast({
         title: "Sucesso!",
         description: "Área de serviço atualizada.",
@@ -109,39 +112,50 @@ export default function AreasPage() {
           </Button>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead className="w-20 text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {areas.map((area) => (
-                <TableRow key={area.name}>
-                  <TableCell className="font-medium">{area.name}</TableCell>
-                   <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Abrir menu</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEdit(area)}>
-                          <Edit className="mr-2 h-4 w-4" /> Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDelete(area)} className="text-destructive">
-                          <Trash2 className="mr-2 h-4 w-4" /> Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+          <div className="border rounded-md">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Líder</TableHead>
+                  <TableHead>Contato do Líder</TableHead>
+                  <TableHead className="w-20 text-right">Ações</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {areas.map((area) => (
+                  <TableRow key={area.name} className="group cursor-pointer">
+                    <TableCell className="font-medium">
+                      <Link href={`/areas/${encodeURIComponent(area.name)}`} className="flex items-center gap-2 hover:underline">
+                        {area.name}
+                        <ChevronRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </Link>
+                    </TableCell>
+                    <TableCell>{area.leader || '-'}</TableCell>
+                    <TableCell>{area.leaderPhone || '-'}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Abrir menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEdit(area); }}>
+                            <Edit className="mr-2 h-4 w-4" /> Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDelete(area); }} className="text-destructive">
+                            <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
@@ -157,6 +171,20 @@ export default function AreasPage() {
                 <FormItem>
                   <FormLabel>Nome da Área</FormLabel>
                   <FormControl><Input placeholder="Ex: Multimídia" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+               <FormField control={form.control} name="leader" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nome do Líder</FormLabel>
+                  <FormControl><Input placeholder="Nome do responsável" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+               <FormField control={form.control} name="leaderPhone" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Contato do Líder</FormLabel>
+                  <FormControl><Input placeholder="(XX) XXXXX-XXXX" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
