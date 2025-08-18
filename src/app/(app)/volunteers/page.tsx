@@ -32,7 +32,7 @@ const volunteerSchema = z.object({
   areas: z.array(z.string()).min(1, "Selecione ao menos uma área"),
   availability: z.array(z.string()),
   phone: z.string().optional(),
-  email: z.string().email("Email inválido").optional(),
+  email: z.string().email({ message: "Email inválido" }).optional().or(z.literal('')),
 });
 
 export default function VolunteersPage() {
@@ -237,7 +237,7 @@ export default function VolunteersPage() {
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecione uma equipe" /></SelectTrigger></FormControl>
                       <SelectContent>
-                        {allTeams.map(team => <SelectItem key={team} value={team}>{team}</SelectItem>)}
+                        {allTeams.map(team => <SelectItem key={team} value={team}>{team}>{team}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <FormMessage />
