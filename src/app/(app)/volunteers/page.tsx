@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from 'react';
-import { PlusCircle, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -40,6 +40,7 @@ export default function VolunteersPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof volunteerSchema>>({
@@ -117,6 +118,10 @@ export default function VolunteersPage() {
     setSelectedVolunteer(null);
     form.reset();
   }
+
+  const filteredVolunteers = volunteers.filter(volunteer =>
+    volunteer.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
   
   return (
     <div className="space-y-8">
@@ -126,15 +131,29 @@ export default function VolunteersPage() {
       </div>
 
       <Card>
-        <CardHeader className="flex-row items-center justify-between">
-          <div>
-            <CardTitle>Lista de Voluntários</CardTitle>
-            <CardDescription>Todos os voluntários cadastrados no sistema.</CardDescription>
-          </div>
-          <Button onClick={handleAdd}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Adicionar Voluntário
-          </Button>
+        <CardHeader>
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                 <div>
+                    <CardTitle>Lista de Voluntários</CardTitle>
+                    <CardDescription>Todos os voluntários cadastrados no sistema.</CardDescription>
+                </div>
+                <div className="flex flex-col-reverse sm:flex-row items-center gap-2 w-full md:w-auto">
+                    <div className="relative w-full md:w-64">
+                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                         <Input
+                            type="search"
+                            placeholder="Buscar voluntário por nome..."
+                            className="pl-8"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <Button onClick={handleAdd} className="w-full sm:w-auto">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Adicionar Voluntário
+                    </Button>
+                </div>
+            </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -149,7 +168,7 @@ export default function VolunteersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {volunteers.map((volunteer) => (
+              {filteredVolunteers.length > 0 ? filteredVolunteers.map((volunteer) => (
                 <TableRow key={volunteer.id}>
                   <TableCell className="font-medium">{volunteer.name}</TableCell>
                   <TableCell>
@@ -209,7 +228,13 @@ export default function VolunteersPage() {
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
-              ))}
+              )) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-24 text-center">
+                    Nenhum voluntário encontrado.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
@@ -237,7 +262,7 @@ export default function VolunteersPage() {
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecione uma equipe" /></SelectTrigger></FormControl>
                       <SelectContent>
-                        {allTeams.map(team => <SelectItem key={team} value={team}>{team}>{team}</SelectItem>)}
+                        {allTeams.map(team => <SelectItem key={team} value={team}>{team}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <FormMessage />
