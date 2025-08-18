@@ -28,13 +28,13 @@ const volunteerSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
   team: z.string().min(1, "Equipe é obrigatória"),
   areas: z.array(z.string()).min(1, "Selecione ao menos uma área"),
-  availability: z.array(z.string()).min(1, "Selecione ao menos uma disponibilidade"),
+  availability: z.array(z.string()),
   phone: z.string().optional(),
   email: z.string().email("Email inválido").optional(),
 });
 
 export default function VolunteersPage() {
-  const [volunteers, setVolunteers] = useState<Volunteer[]>(initialVolunteers);
+  const [volunteers, setVolunteers] = useState<Volunteer[]>(initialVolunteers.sort((a, b) => a.name.localeCompare(b.name)));
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
@@ -47,7 +47,7 @@ export default function VolunteersPage() {
   
   function handleAdd() {
     setSelectedVolunteer(null);
-    form.reset({ name: '', team: '', areas: [], availability: [], phone: '', email: '' });
+    form.reset({ name: '', team: 'N/A', areas: [], availability: [], phone: '', email: '' });
     setIsDialogOpen(true);
   }
 
@@ -77,7 +77,7 @@ export default function VolunteersPage() {
   function onSubmit(data: z.infer<typeof volunteerSchema>) {
     if (selectedVolunteer) {
         // Edit
-        setVolunteers(volunteers.map(v => v.id === selectedVolunteer.id ? { ...v, ...data } : v));
+        setVolunteers(volunteers.map(v => v.id === selectedVolunteer.id ? { ...v, ...data } : v).sort((a, b) => a.name.localeCompare(b.name)));
         toast({
             title: "Sucesso!",
             description: "Voluntário atualizado.",
@@ -89,7 +89,7 @@ export default function VolunteersPage() {
             id: (volunteers.length + 1).toString(),
             ...data,
         };
-        setVolunteers([...volunteers, newVolunteer]);
+        setVolunteers([...volunteers, newVolunteer].sort((a, b) => a.name.localeCompare(b.name)));
         toast({
             title: "Sucesso!",
             description: "Novo voluntário adicionado.",
@@ -138,12 +138,12 @@ export default function VolunteersPage() {
                   <TableCell className="font-medium">{volunteer.name}</TableCell>
                   <TableCell>{volunteer.team}</TableCell>
                   <TableCell>
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-1 max-w-xs">
                       {volunteer.areas.map(area => <Badge key={area} variant="secondary">{area}</Badge>)}
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-1 max-w-xs">
                       {volunteer.availability.map(avail => <Badge key={avail} variant="outline">{avail}</Badge>)}
                     </div>
                   </TableCell>
