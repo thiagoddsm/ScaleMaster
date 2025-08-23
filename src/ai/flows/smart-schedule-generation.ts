@@ -89,11 +89,11 @@ Regra de Unicidade: Um voluntário não pode ser alocado para mais de uma vaga n
 
 Regra de Competência: Um voluntário só pode ser alocado em uma 'area' de evento se o nome da área constar em sua lista 'areas'.
 
-Regra de Disponibilidade: Um voluntário só pode ser alocado em um evento se o 'name' do evento constar em sua lista 'availability'.
+Regra de Disponibilidade (CRÍTICA): Um voluntário só pode ser alocado em um evento se o 'name' do evento constar em sua lista 'availability'. Esta regra é inegociável.
 
-Regra de Rotação: A escala definida na estrutura 'teamSchedules' é obrigatória e a fonte da verdade para a responsabilidade semanal.
+Regra de Rotação: A escala definida na estrutura 'teamSchedules' é obrigatória.
 
-Regra da 5ª Semana: Se um mês tiver uma quinta semana, a equipe responsável será definida pela entrada em 'teamSchedules'. Se não houver, a responsabilidade retorna para a Equipe Alpha.
+Regra da 5ª Semana: Se um mês tiver uma quinta semana sem uma 'TeamSchedule' definida, a responsabilidade retorna para a Equipe Alpha.
 
 Regra de Otimização (Justiça): Ao escolher entre candidatos qualificados, sempre priorize aquele com o menor valor em 'Contagem_Servicos_Mes'.
 
@@ -118,9 +118,9 @@ Passo 2.1: Filtro por Competência (Área de Serviço)
 Crie uma lista de candidatos a partir de todos os 'volunteers'.
 Filtre-a, mantendo apenas voluntários cuja lista 'areas' contenha o 'name' da área da vaga.
 
-Passo 2.2: Filtro por Disponibilidade de Evento (Verificação Rigorosa)
+Passo 2.2: Filtro por Disponibilidade de Evento (Verificação Eliminatória)
 Use a lista do passo anterior.
-Filtre-a novamente, mantendo apenas voluntários cuja lista 'availability' contenha o 'name' do evento atual. A verificação deve ser exata.
+Este é um filtro eliminatório: Remova da lista qualquer voluntário cuja lista 'availability' não contenha o valor exato de 'name' do evento atual. A correspondência deve ser exata e sensível a maiúsculas/minúsculas.
 
 Passo 2.3: Filtro por Equipe da Semana
 Use a lista do passo anterior.
@@ -133,11 +133,16 @@ Analise a lista final de candidatos.
 SE A LISTA CONTIVER CANDIDATOS:
 Aplique a Regra de Unicidade: Remova candidatos já alocados em outra vaga neste mesmo evento.
 Aplique a Otimização e Desempate: Ordene os candidatos restantes por 'Contagem_Servicos_Mes' (crescente) e, em seguida, por 'id' (alfanumérico).
-Verificação Final (Trava de Segurança): Pegue o primeiro voluntário da lista (candidato final). Confirme que ele atende a TODAS as três condições: a área está em 'candidato.areas', o evento está em 'candidato.availability', e 'candidato.team' é a equipe da semana.
-Alocação: Se a verificação for bem-sucedida, escale o candidato.
+
+Auditoria Final de Conformidade (Trava de Segurança): Pegue o primeiro voluntário da lista (candidato final). Este candidato DEVE OBRIGATORIAMENTE passar na seguinte auditoria tripla. Se falhar em qualquer ponto, ele é descartado e a vaga é tratada como falha.
+✅ Auditoria de Competência: 'candidato.areas' contém a 'area' da vaga?
+✅ Auditoria de Disponibilidade: 'candidato.availability' contém o 'name' do evento?
+✅ Auditoria de Equipe: 'candidato.team' é a equipe da semana?
+
+Alocação: Se o candidato passar na auditoria, escale-o.
 Atualização: Incremente em +1 a 'Contagem_Servicos_Mes' do voluntário alocado.
 
-SE A LISTA ESTIVER VAZIA (ou se nenhum candidato passar na Verificação Final): A vaga falhou. Determine o motivo verificando os filtros em ordem inversa:
+SE A LISTA ESTIVER VAZIA (ou se o candidato final falhar na Auditoria): A vaga falhou. Determine o motivo verificando os filtros em ordem inversa:
 Se a lista ficou vazia no Passo 2.3: "MOTIVO: Voluntários disponíveis não pertencem à equipe da semana ([Nome da Equipe])."
 Se a lista ficou vazia no Passo 2.2: "MOTIVO: Nenhum voluntário desta área está disponível para este evento."
 Se a lista ficou vazia no Passo 2.1: "MOTIVO: Nenhum voluntário cadastrado nesta área de serviço."
