@@ -46,15 +46,6 @@ export default function GenerateSchedulePage() {
         teams,
         teamSchedules,
       });
-      
-      // Basic cleanup of volunteer names
-      result.assignments.forEach(assignment => {
-        if (assignment.volunteer && (assignment.volunteer.includes('null') || assignment.volunteer.length > 50)) {
-           assignment.reason = 'Falha na IA ao atribuir voluntário.';
-           assignment.volunteer = null;
-        }
-      });
-      
       setSchedule(result);
     } catch (error) {
       console.error('Error generating schedule:', error);
