@@ -4,6 +4,7 @@ export const adminUserEmail = "thiagoddsm@gmail.com";
 
 export const areasOfService: AreaOfService[] = [
     { name: "Som" },
+    { name: "Projeção" },
 ].sort((a, b) => a.name.localeCompare(b.name));
 
 export const teams: Team[] = [
@@ -26,6 +27,19 @@ export const volunteers: Volunteer[] = [
   { id: '10', name: 'Filipe Sant\'Anna', team: 'Bravo', areas: ['Som'], availability: ['Culto da Família'] },
   { id: '11', name: 'Isabelle Nunes', team: 'Charlie', areas: ['Som'], availability: ['Culto da Família'] },
   { id: '12', name: 'Raphael Roza', team: 'Delta', areas: ['Som'], availability: ['Culto da Família'] },
+  // New Volunteers
+  { id: '13', name: 'Juliana Paes', team: 'Alpha', areas: ['Projeção'], availability: ['Culto da Família'] },
+  { id: '14', name: 'Marcos Freitas', team: 'Bravo', areas: ['Projeção'], availability: ['Culto da Família'] },
+  { id: '15', name: 'Beatriz Almeida', team: 'Charlie', areas: ['Projeção'], availability: ['Culto da Família'] },
+  { id: '16', name: 'Leandro Castro', team: 'Delta', areas: ['Projeção'], availability: ['Culto da Família'] },
+  { id: '17', name: 'Fernanda Lima', team: 'Alpha', areas: ['Projeção'], availability: ['Culto da Família'] },
+  { id: '18', name: 'Gustavo Ribeiro', team: 'Bravo', areas: ['Projeção'], availability: ['Culto da Família'] },
+  { id: '19', name: 'Patrícia Souza', team: 'Charlie', areas: ['Projeção'], availability: ['Culto da Família'] },
+  { id: '20', name: 'Ricardo Oliveira', team: 'Delta', areas: ['Projeção'], availability: ['Culto da Família'] },
+  { id: '21', name: 'Camila Santos', team: 'Alpha', areas: ['Projeção'], availability: ['Culto da Família'] },
+  { id: '22', name: 'Rodrigo Pereira', team: 'Bravo', areas: ['Projeção'], availability: ['Culto da Família'] },
+  { id: '23', name: 'Amanda Costa', team: 'Charlie', areas: ['Projeção'], availability: ['Culto da Família'] },
+  { id: '24', name: 'Vinicius Ferreira', team: 'Delta', areas: ['Projeção'], availability: ['Culto da Família'] },
 ];
 
 export const events: Event[] = [
@@ -37,6 +51,7 @@ export const events: Event[] = [
     time: '10:00',
     areas: [
       { name: 'Som', volunteersNeeded: 1 },
+      { name: 'Projeção', volunteersNeeded: 1 },
     ],
     responsible: 'Pastor Jonas',
   },
