@@ -1,17 +1,29 @@
 "use client"
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { savedSchedules as initialSavedSchedules } from '@/lib/data';
+import { savedSchedules as initialSavedSchedules, events as allEvents, areasOfService as allAreas, teams as allTeams } from '@/lib/data';
 import type { SavedSchedule, ScheduleAssignment } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
+
+const weekDays = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
 
 export default function SchedulesPage() {
-  const [schedules, setSchedules] = useState<SavedSchedule[]>(initialSavedSchedules);
+  const [schedules] = useState<SavedSchedule[]>(initialSavedSchedules);
   const [year, setYear] = useState<string>(new Date().getFullYear().toString());
   const [month, setMonth] = useState<string>((new Date().getMonth() + 1).toString());
+
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [dayOfWeekFilter, setDayOfWeekFilter] = useState("all");
+  const [eventFilter, setEventFilter] = useState("all");
+  const [areaFilter, setAreaFilter] = useState("all");
+  const [teamFilter, setTeamFilter] = useState("all");
+
 
   const years = Array.from({ length: 10 }, (_, i) => (new Date().getFullYear() - 5 + i).toString());
   const months = Array.from({ length: 12 }, (_, i) => ({ value: (i + 1).toString(), label: new Date(0, i).toLocaleString('pt-BR', { month: 'long' }) }));
@@ -26,8 +38,7 @@ export default function SchedulesPage() {
         return [];
     }
 
-    // Combine all assignments from all relevant saved schedules for that month
-    const allAssignments = relevantSchedules.flatMap(s => 
+    const allAssignments: ScheduleAssignment[] = relevantSchedules.flatMap(s => 
         s.data.scheduleData.flatMap(day => 
             day.assignments.map(assignment => ({
                 ...assignment,
@@ -37,8 +48,7 @@ export default function SchedulesPage() {
         )
     );
 
-    // Sort by date, then event, then area
-    return allAssignments.sort((a, b) => {
+    const sortedAssignments = allAssignments.sort((a, b) => {
         if (a.fullDate < b.fullDate) return -1;
         if (a.fullDate > b.fullDate) return 1;
         if (a.evento < b.evento) return -1;
@@ -48,7 +58,23 @@ export default function SchedulesPage() {
         return 0;
     });
 
-  }, [schedules, year, month]);
+    return sortedAssignments.filter(assignment => {
+        const searchTermLower = searchTerm.toLowerCase();
+        const searchMatch = !searchTerm ||
+            assignment.evento.toLowerCase().includes(searchTermLower) ||
+            assignment.area.toLowerCase().includes(searchTermLower) ||
+            (assignment.voluntario_alocado || '').toLowerCase().includes(searchTermLower) ||
+            (assignment.motivo || '').toLowerCase().includes(searchTermLower);
+
+        const dayOfWeekMatch = dayOfWeekFilter === 'all' || assignment.dayOfWeek === dayOfWeekFilter;
+        const eventMatch = eventFilter === 'all' || assignment.evento === eventFilter;
+        const areaMatch = areaFilter === 'all' || assignment.area === areaFilter;
+        const teamMatch = teamFilter === 'all' || assignment.equipe === teamFilter;
+
+        return searchMatch && dayOfWeekMatch && eventMatch && areaMatch && teamMatch;
+    });
+
+  }, [schedules, year, month, searchTerm, dayOfWeekFilter, eventFilter, areaFilter, teamFilter]);
 
   return (
     <div className="space-y-8">
@@ -58,7 +84,7 @@ export default function SchedulesPage() {
       </div>
        <Card>
         <CardHeader>
-          <CardTitle>Filtrar Escala</CardTitle>
+          <CardTitle>Filtrar Período</CardTitle>
           <CardDescription>
             Selecione o mês e o ano para visualizar a escala consolidada.
           </CardDescription>
@@ -88,13 +114,58 @@ export default function SchedulesPage() {
           </div>
         </CardContent>
       </Card>
-
-      <Card>
+      
+       <Card>
         <CardHeader>
-          <CardTitle>Escala Unificada</CardTitle>
-          <CardDescription>
-            Exibindo todos os agendamentos para {months.find(m => m.value === month)?.label} de {year}.
-          </CardDescription>
+            <CardTitle>Filtros Avançados</CardTitle>
+            <div className="flex flex-col md:flex-row gap-4 mt-4">
+               <div className="relative w-full md:flex-1">
+                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                 <Input
+                    type="search"
+                    placeholder="Buscar por evento, área, voluntário..."
+                    className="pl-8 w-full"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+               </div>
+              <Select value={dayOfWeekFilter} onValueChange={setDayOfWeekFilter}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                  <SelectValue placeholder="Filtrar por Dia" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os Dias</SelectItem>
+                  {weekDays.map(day => <SelectItem key={day} value={day}>{day}</SelectItem>)}
+                </SelectContent>
+              </Select>
+               <Select value={eventFilter} onValueChange={setEventFilter}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                  <SelectValue placeholder="Filtrar por Evento" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os Eventos</SelectItem>
+                  {allEvents.map(event => <SelectItem key={event.id} value={event.name}>{event.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={areaFilter} onValueChange={setAreaFilter}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                  <SelectValue placeholder="Filtrar por Área" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as Áreas</SelectItem>
+                  {allAreas.map(area => <SelectItem key={area.name} value={area.name}>{area.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={teamFilter} onValueChange={setTeamFilter}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                  <SelectValue placeholder="Filtrar por Equipe" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as Equipes</SelectItem>
+                  {allTeams.map(team => <SelectItem key={team.name} value={team.name}>{team.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
         </CardHeader>
         <CardContent>
           <div className="border rounded-md">
@@ -132,7 +203,7 @@ export default function SchedulesPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={7} className="h-24 text-center">
-                      Nenhuma escala salva encontrada para este período.
+                      Nenhum agendamento encontrado para os filtros aplicados.
                     </TableCell>
                   </TableRow>
                 )}

@@ -1,4 +1,4 @@
-import { GenerateScheduleOutput, ScheduleItem } from "@/ai/flows/smart-schedule-generation";
+import { GenerateScheduleOutput, ScheduleItem as AIScheduleItem } from "@/ai/flows/smart-schedule-generation";
 
 export type Volunteer = {
   id: string;
@@ -65,6 +65,10 @@ export type SavedSchedule = {
   data: GenerateScheduleOutput;
 }
 
+// Renaming the imported type to avoid conflict
+export type ScheduleItem = AIScheduleItem;
+
+// This type represents a single assignment within a schedule, enriched with date info
 export type ScheduleAssignment = ScheduleItem & {
   fullDate: string;
   dayOfWeek: string;
