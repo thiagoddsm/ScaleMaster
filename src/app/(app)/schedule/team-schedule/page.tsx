@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { teams as allTeams, teamSchedules as initialTeamSchedules } from '@/lib/data';
@@ -14,12 +14,38 @@ import { ArrowUpDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const DND_TYPE_TEAM = 'team';
+const ROTATION_START_DATE_KEY = 'rotationStartDate';
+const TEAM_ORDER_KEY = 'teamOrder';
 
 export default function TeamSchedulePage() {
   const [rotationStartDate, setRotationStartDate] = useState<string>('2024-07-07');
-  const [teamOrder, setTeamOrder] = useState<string[]>(initialTeamSchedules.map(ts => ts.team).filter((t, i, a) => a.indexOf(t) === i));
-  const [schedules, setSchedules] = useState<TeamSchedule[]>(initialTeamSchedules);
+  const [teamOrder, setTeamOrder] = useState<string[]>(() => initialTeamSchedules.map(ts => ts.team).filter((t, i, a) => a.indexOf(t) === i));
+  const [isLoaded, setIsLoaded] = useState(false);
+  
   const { toast } = useToast();
+
+  useEffect(() => {
+    try {
+      const savedDate = localStorage.getItem(ROTATION_START_DATE_KEY);
+      const savedOrderJSON = localStorage.getItem(TEAM_ORDER_KEY);
+
+      if (savedDate) {
+        setRotationStartDate(savedDate);
+      }
+      if (savedOrderJSON) {
+        const savedOrder = JSON.parse(savedOrderJSON);
+        // Basic validation to ensure it's an array of strings
+        if (Array.isArray(savedOrder) && savedOrder.every(item => typeof item === 'string')) {
+          setTeamOrder(savedOrder);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load settings from localStorage", error);
+    } finally {
+      setIsLoaded(true);
+    }
+  }, []);
+
 
   const generatedSchedule = useMemo(() => {
     if (!rotationStartDate || teamOrder.length === 0) return [];
@@ -58,16 +84,34 @@ export default function TeamSchedulePage() {
   };
 
   const handleSave = () => {
-    // In a real app, you would save this data to a database.
-    // For this example, we'll just update the state and show a toast.
-    setSchedules(generatedSchedule);
-    toast({
-      title: 'Sucesso!',
-      description: 'A configuração da rotação de equipes foi salva.',
-      className: 'bg-primary text-primary-foreground',
-    });
+    try {
+      localStorage.setItem(ROTATION_START_DATE_KEY, rotationStartDate);
+      localStorage.setItem(TEAM_ORDER_KEY, JSON.stringify(teamOrder));
+      toast({
+        title: 'Sucesso!',
+        description: 'A configuração da rotação de equipes foi salva.',
+        className: 'bg-primary text-primary-foreground',
+      });
+    } catch (error) {
+       console.error("Failed to save settings to localStorage", error);
+       toast({
+        variant: 'destructive',
+        title: 'Erro!',
+        description: 'Não foi possível salvar a configuração.',
+      });
+    }
   };
 
+  if (!isLoaded) {
+    return (
+        <div className="flex h-screen items-center justify-center">
+            <div className="flex items-center space-x-2">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                <span className="text-muted-foreground">Carregando configurações...</span>
+            </div>
+        </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
