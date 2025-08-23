@@ -1,3 +1,5 @@
+import { GenerateScheduleOutput } from "@/ai/flows/smart-schedule-generation";
+
 export type Volunteer = {
   id: string;
   name: string;
@@ -54,13 +56,11 @@ export type UserPermission = {
   canManageSettings: boolean;
 };
 
-// This type is now defined in the flow file, but kept here for reference if needed elsewhere.
-export type GeneratedSchedule = {
-  assignments: {
-    eventUniqueName: string;
-    area: string;
-    position: number;
-    volunteer: string | null;
-    reason: string | null;
-  }[];
-};
+export type SavedSchedule = {
+  id: string;
+  title: string;
+  createdAt: string;
+  year: number;
+  month: number;
+  data: GenerateScheduleOutput;
+}

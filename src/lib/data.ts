@@ -1,4 +1,4 @@
-import type { Volunteer, Event, Team, TeamSchedule, AreaOfService, UserPermission } from './types';
+import type { Volunteer, Event, Team, TeamSchedule, AreaOfService, UserPermission, SavedSchedule } from './types';
 
 export const adminUserEmail = "thiagoddsm@gmail.com";
 
@@ -59,21 +59,10 @@ export const teamSchedules: TeamSchedule[] = [
 
 // This is a mock in-memory storage for saved schedules.
 // In a real app, this would be stored in a database.
-export const savedSchedules: any[] = [];
+export const savedSchedules: SavedSchedule[] = [];
 
-// This is a mock for user permissions. In a real app, this would be in a database.
 export const userPermissions: UserPermission[] = [
     // The master admin permissions are now handled in the component
     // based on the adminUserEmail. This array can be used for other
     // specific user permissions in the future.
 ];
-
-export type GeneratedSchedule = {
-  assignments: {
-    eventUniqueName: string;
-    area: string;
-    position: number;
-    volunteer: string | null;
-    reason: string | null;
-  }[];
-};

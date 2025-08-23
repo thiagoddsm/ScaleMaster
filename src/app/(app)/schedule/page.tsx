@@ -1,14 +1,14 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Info } from 'lucide-react';
+import { Loader2, Info, Save } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import { volunteers, events, teamSchedules } from '@/lib/data';
+import { volunteers, events, teamSchedules, savedSchedules } from '@/lib/data';
 import { generateSchedule, GenerateScheduleOutput } from '@/ai/flows/smart-schedule-generation';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -21,13 +21,20 @@ export default function SchedulePage() {
   const [month, setMonth] = useState<string>((new Date().getMonth() + 1).toString());
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<GenerateScheduleOutput | null>(null);
+  const [isSaved, setIsSaved] = useState(false);
+
 
   const years = Array.from({ length: 10 }, (_, i) => (new Date().getFullYear() - 5 + i).toString());
   const months = Array.from({ length: 12 }, (_, i) => ({ value: (i + 1).toString(), label: new Date(0, i).toLocaleString('pt-BR', { month: 'long' }) }));
 
+  const monthLabel = useMemo(() => {
+    return months.find(m => m.value === month)?.label || '';
+  }, [month, months]);
+
   const handleGenerateClick = async () => {
     setIsLoading(true);
     setResult(null);
+    setIsSaved(false);
     try {
       const response = await generateSchedule({
         year: parseInt(year),
@@ -47,6 +54,26 @@ export default function SchedulePage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSaveSchedule = () => {
+    if (!result) return;
+
+    const newSavedSchedule = {
+      id: `escala-${year}-${month}-${Date.now()}`,
+      title: `Escala para ${monthLabel} de ${year}`,
+      createdAt: new Date().toISOString(),
+      year: parseInt(year),
+      month: parseInt(month),
+      data: result,
+    };
+
+    savedSchedules.push(newSavedSchedule);
+    setIsSaved(true);
+    toast({
+      title: 'Escala Salva!',
+      description: `A escala para ${monthLabel} de ${year} foi salva com sucesso.`,
+    });
   };
 
   return (
@@ -106,8 +133,12 @@ export default function SchedulePage() {
       {result && (
         <div className="space-y-8">
             <Card>
-                <CardHeader>
+                <CardHeader className="flex-row items-center justify-between">
                     <CardTitle>Tabela de Escala</CardTitle>
+                    <Button onClick={handleSaveSchedule} disabled={isSaved}>
+                        <Save className="mr-2 h-4 w-4" />
+                        {isSaved ? 'Salva' : 'Salvar Escala'}
+                    </Button>
                 </CardHeader>
                 <CardContent>
                     <div className="border rounded-md">
