@@ -27,8 +27,8 @@ const GenerateScheduleOutputSchema = z.object({
     eventUniqueName: z.string().describe("The unique name of the event, in the format \"[Event Name] - [dd/MM]\". Use two digits for day and month."),
     area: z.string().describe("The area of service for the assignment."),
     position: z.number().describe("The position number for the assignment (e.g., 1, 2, 3)."),
-    volunteer: z.string().nullable().describe("The name of the assigned volunteer, or null if no one was assigned."),
-    reason: z.string().nullable().describe("The reason for the assignment outcome, especially if a volunteer could not be assigned."),
+    volunteer: z.string().nullable().optional().describe("The name of the assigned volunteer, or null if no one was assigned."),
+    reason: z.string().nullable().optional().describe("The reason for the assignment outcome, especially if a volunteer could not be assigned."),
   })).describe("A list of all the volunteer assignments for the requested schedule."),
 });
 export type GenerateScheduleOutput = z.infer<typeof GenerateScheduleOutputSchema>;
