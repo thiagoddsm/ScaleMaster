@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -38,9 +38,10 @@ const volunteerSchema = z.object({
 });
 
 
-export default function AreaDetailPage({ params }: { params: { name: string } }) {
+export default function AreaDetailPage() {
+  const params = useParams();
   const { toast } = useToast();
-  const areaName = decodeURIComponent(params.name);
+  const areaName = decodeURIComponent(params.name as string);
 
   // Data states
   const [area, setArea] = useState<AreaOfService | undefined>(() => allAreas.find(a => a.name === areaName));
@@ -393,5 +394,3 @@ export default function AreaDetailPage({ params }: { params: { name: string } })
     </div>
   );
 }
-
-    
