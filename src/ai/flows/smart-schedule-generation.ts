@@ -45,30 +45,35 @@ const prompt = ai.definePrompt({
   input: { schema: GenerateScheduleInputSchema },
   output: { schema: GenerateScheduleOutputSchema },
   prompt: `
-    You are an intelligent scheduling assistant for a church. Your task is to generate a volunteer schedule for a given month and year based on a set of rules.
+    You are an intelligent scheduling assistant for a church. Your task is to generate a volunteer schedule for a given month and year based on a set of rules. You must follow the process below exactly.
 
     **Process:**
+
     1.  **Determine Event Dates:** First, identify all event occurrences for the given month and year.
         *   For 'Semanal' events, calculate all dates for the specified 'dayOfWeek'.
         *   For 'Pontual' events, check if their 'date' falls within the requested month and year.
-    2.  **Generate All Potential Assignments:** For each event occurrence, create a list of every single required position (e.g., Som Pos. 1, Recepção Pos. 1, Recepção Pos. 2). This is your master list of VAGAS.
-    3.  **Filter and Assign:** Now, iterate through your master list of VAGAS and for each vaga, create ONE assignment object.
-        *   **Area Filtering:** First, check if the 'areasToSchedule' input is provided and not empty. If it is, and the current vaga's area is NOT in 'areasToSchedule', you MUST discard this vaga. Do NOT include it in the final output.
-        *   **Assign Volunteer:** If the vaga's area passes the filter (or if no filter is provided), proceed to find a suitable volunteer.
+
+    2.  **Generate All Potential Assignments (Master List of VAGAS):** For each event occurrence identified in Step 1, create a master list of every single required position. For example, if "Culto da família" needs 2 people for "Recepção", your list should contain entries for "Recepção Pos. 1" and "Recepção Pos. 2" for that specific date. This is your master list of VAGAS.
+
+    3.  **Filter and Assign (Iterate through VAGAS):** Now, iterate through your master list of VAGAS. For each vaga, you will create ONE final assignment object.
+        *   **Area Filtering:** First, check if the 'areasToSchedule' input array is provided and not empty.
+            *   If it is, and the current vaga's area is NOT in the 'areasToSchedule' array, you MUST discard this vaga. Do not create an assignment for it and do not include it in the final output.
+            *   If the vaga's area IS in the 'areasToSchedule' array (or if the array is empty), proceed to the next step.
+        *   **Assign Volunteer:** If the vaga passes the area filter, proceed to find a suitable volunteer.
             a.  Identify the **responsible team** for the event's date using the 'teamSchedules' data.
             b.  Find a volunteer who meets ALL the following criteria:
                 i.   Is a member of the **responsible team**.
-                ii.  Serves in the required **area**.
-                iii. Is available for that specific **event name** (e.g., 'Culto da família').
+                ii.  Serves in the required **area** for the vaga.
+                iii. Is **available** for that specific **event name** (e.g., 'Culto da família').
                 iv.  Is **not already assigned** to another position on the same day. A volunteer can only take one position per day.
-            c.  **Create Output Object:** Based on the outcome, create ONE assignment object for the vaga.
-                *   If a suitable volunteer is found, set their name in the 'volunteer' field and the 'reason' field to null.
+            c.  **Create ONE Output Object:** Based on the assignment outcome, create a single assignment object for the vaga.
+                *   If a suitable volunteer is found, set their name in the 'volunteer' field. The 'reason' field should be null.
                 *   If no suitable volunteer is found, set the 'volunteer' field to null and provide a **brief, clear reason** in the 'reason' field (e.g., "Equipe sem voluntários para a área", "Voluntário indisponível", "Voluntários já alocados").
+
     4.  **Final Output Format:**
-        *   The final output MUST be a valid JSON object matching the provided schema.
+        *   The final output MUST be a valid JSON object matching the provided output schema.
         *   The 'eventUniqueName' must be in the format "Event Name - dd/MM". Use two digits for day and month.
-        *   Ensure all event occurrences within the month that pass the area filter are processed.
-        *   There must be strictly one output object per required position. No duplicates.
+        *   Ensure every single vaga that passes the area filter from Step 3 results in exactly one assignment object in the final output. There must be no duplicates.
 
     **Input Data:**
     - Month: {{{month}}}
@@ -92,3 +97,4 @@ const generateScheduleFlow = ai.defineFlow(
     return output!;
   }
 );
+
