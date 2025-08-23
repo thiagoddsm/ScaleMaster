@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Blocks, Calendar, LayoutDashboard, Users, Construction, Shield } from 'lucide-react';
+import { Blocks, Calendar, LayoutDashboard, Users, Construction, Shield, CalendarCheck } from 'lucide-react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
 import { Button } from "@/components/ui/button";
 
@@ -13,6 +13,7 @@ const menuItems = [
   { href: '/events', label: 'Eventos', icon: Calendar },
   { href: '/areas', label: 'Áreas de Serviço', icon: Construction },
   { href: '/teams', label: 'Equipes', icon: Shield },
+  { href: '/schedule', label: 'Escalas', icon: CalendarCheck },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
