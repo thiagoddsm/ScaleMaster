@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/use-auth';
 import type { UserPermission } from '@/lib/types';
 import { userPermissions as initialUserPermissions, adminUserEmail } from '@/lib/data';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 
 
 export default function SettingsPage() {
