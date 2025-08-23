@@ -64,6 +64,9 @@ export const volunteers: Volunteer[] = [
   { id: '18', name: 'Carlos Thurler', team: 'Bravo', areas: ['Apoio'], availability: ['Culto da tarde', 'Culto da noite', 'Santa Ceia'] },
   { id: '19', name: 'Deyvson Caetano', team: 'Charlie', areas: ['Apoio'], availability: ['Culto da família', 'Culto propósitos', 'Batismo'] },
   { id: '20', name: 'Fabio Sota', team: 'Delta', areas: ['Apoio'], availability: ['Culto da noite'] },
+  
+  // Bistro - 1 volunteer
+  { id: '21', name: 'João da Silva', team: 'Alpha', areas: ['Bistro'], availability: ['Culto da família'] },
 ];
 
 export const events: Event[] = [
@@ -101,6 +104,7 @@ export const events: Event[] = [
       { name: 'Apoio', volunteersNeeded: 1 },
       { name: 'Estacionamento', volunteersNeeded: 1 },
       { name: 'Fotografia', volunteersNeeded: 1 },
+      { name: 'Bistro', volunteersNeeded: 1 },
     ],
     responsible: 'Pastor Jonas',
   },
