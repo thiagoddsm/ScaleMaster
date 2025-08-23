@@ -1,4 +1,4 @@
-import type { Volunteer, Event, Team, TeamSchedule, AreaOfService } from './types';
+import type { Volunteer, Event, Team, TeamSchedule, AreaOfService, UserPermission } from './types';
 
 export const areasOfService: AreaOfService[] = [
     { name: "Apoio" },
@@ -213,3 +213,19 @@ export const teamSchedules: TeamSchedule[] = [
 // This is a mock in-memory storage for saved schedules.
 // In a real app, this would be stored in a database.
 export const savedSchedules: any[] = [];
+
+// This is a mock for user permissions. In a real app, this would be in a database.
+export const userPermissions: UserPermission[] = [
+    // Add mock data here if needed for testing, e.g.
+    // {
+    //     userId: 'some-firebase-uid',
+    //     userDisplayName: 'Admin User',
+    //     userPhotoURL: '',
+    //     canManageVolunteers: true,
+    //     canManageEvents: true,
+    //     canManageAreas: true,
+    //     canManageTeams: true,
+    //     canGenerateSchedules: true,
+    //     canManageSettings: true,
+    // }
+];

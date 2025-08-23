@@ -41,3 +41,15 @@ export type AreaOfService = {
   leader?: string;
   leaderPhone?: string;
 };
+
+export type UserPermission = {
+  userId: string;
+  userDisplayName: string;
+  userPhotoURL: string;
+  canManageVolunteers: boolean;
+  canManageEvents: boolean;
+  canManageAreas: boolean;
+  canManageTeams: boolean;
+  canGenerateSchedules: boolean;
+  canManageSettings: boolean;
+};

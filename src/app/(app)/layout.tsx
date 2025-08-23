@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Blocks, Calendar, LayoutDashboard, Users, Construction, Shield, CalendarCheck, LogOut } from 'lucide-react';
+import { Blocks, Calendar, LayoutDashboard, Users, Construction, Shield, CalendarCheck, LogOut, Cog } from 'lucide-react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -16,6 +16,10 @@ const menuItems = [
   { href: '/areas', label: 'Áreas de Serviço', icon: Construction },
   { href: '/teams', label: 'Equipes', icon: Shield },
   { href: '/schedule', label: 'Escalas', icon: CalendarCheck },
+];
+
+const bottomMenuItems = [
+    { href: '/settings', label: 'Configurações', icon: Cog },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -56,7 +60,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <h1 className="text-xl font-semibold text-primary-foreground/90">ScaleMaster</h1>
             </div>
         </SidebarHeader>
-        <SidebarContent>
+        <SidebarContent className="flex flex-col justify-between">
           <SidebarMenu>
             {menuItems.map((item) => (
               <SidebarMenuItem key={item.href}>
@@ -74,6 +78,25 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+          <SidebarMenu>
+            {bottomMenuItems.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton
+                    asChild
+                    isActive={pathname.startsWith(item.href)}
+                    tooltip={{
+                        children: item.label,
+                        className: "bg-primary text-primary-foreground",
+                    }}
+                    >
+                    <Link href={item.href}>
+                        <item.icon />
+                        <span>{item.label}</span>
+                    </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
             ))}
           </SidebarMenu>
         </SidebarContent>
