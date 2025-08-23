@@ -131,16 +131,19 @@ Passo 2.4: Seleção Final, Alocação e Diagnóstico
 Analise a lista final de candidatos.
 
 SE A LISTA CONTIVER CANDIDATOS:
-Aplique a Regra de Unicidade: Remova candidatos já alocados em outra vaga neste mesmo evento.
+Aplique a Regra de Unicidade: Remova candidatos já alocados em outra vaga neste mesmo evento. Se a lista ficar vazia, pule para a seção "SE A LISTA ESTIVER VAZIA".
 Aplique a Otimização e Desempate: Ordene os candidatos restantes por 'Contagem_Servicos_Mes' (crescente) e, em seguida, por 'id' (alfanumérico).
 
-Auditoria Final de Conformidade (Trava de Segurança): Pegue o primeiro voluntário da lista (candidato final). Este candidato DEVE OBRIGATORIAMENTE passar na seguinte auditoria tripla. Se falhar em qualquer ponto, ele é descartado e a vaga é tratada como falha.
+Auditoria Final de Conformidade (Trava de Segurança): Pegue o primeiro voluntário da lista (candidato final). Este candidato DEVE OBRIGATORIAMENTE passar na seguinte auditoria tripla.
 ✅ Auditoria de Competência: 'candidato.areas' contém a 'area' da vaga?
 ✅ Auditoria de Disponibilidade: 'candidato.availability' contém o 'name' do evento?
 ✅ Auditoria de Equipe: 'candidato.team' é a equipe da semana?
 
 Alocação: Se o candidato passar na auditoria, escale-o.
 Atualização: Incremente em +1 a 'Contagem_Servicos_Mes' do voluntário alocado.
+
+Se o candidato final falhar em QUALQUER ponto da auditoria, ele será descartado e a vaga será tratada como falha. Pule para a seção 'SE A LISTA ESTIVER VAZIA'.
+
 
 SE A LISTA ESTIVER VAZIA (ou se o candidato final falhar na Auditoria): A vaga falhou. Determine o motivo verificando os filtros em ordem inversa:
 Se a lista ficou vazia no Passo 2.3: "MOTIVO: Voluntários disponíveis não pertencem à equipe da semana ([Nome da Equipe])."
