@@ -55,6 +55,17 @@ export const events: Event[] = [
     ],
     responsible: 'Pastor Jonas',
   },
+  {
+    id: '2',
+    name: 'Culto de Propósitos',
+    frequency: 'Semanal',
+    dayOfWeek: 'Quinta-feira',
+    time: '20:00',
+    areas: [
+      { name: 'Som', volunteersNeeded: 1 },
+      { name: 'Projeção', volunteersNeeded: 1 },
+    ],
+  },
 ];
 
 export const teamSchedules: TeamSchedule[] = [
