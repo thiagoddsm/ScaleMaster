@@ -12,7 +12,7 @@ import { z } from 'zod';
 import type { Volunteer, Event, TeamSchedule } from '@/lib/types';
 
 
-export const GenerateScheduleInputSchema = z.object({
+const GenerateScheduleInputSchema = z.object({
   year: z.number().describe('The year for which to generate the schedule.'),
   month: z.number().describe('The month for which to generate the schedule (1-12).'),
   volunteers: z.any().describe('The list of all available volunteers.'),
@@ -22,7 +22,7 @@ export const GenerateScheduleInputSchema = z.object({
 export type GenerateScheduleInput = z.infer<typeof GenerateScheduleInputSchema>;
 
 
-export const GenerateScheduleOutputSchema = z.object({
+const GenerateScheduleOutputSchema = z.object({
     scaleTable: z.string().describe("A Markdown table representing the generated schedule."),
     report: z.object({
         fillRate: z.string().describe("The fill rate of the schedule."),
