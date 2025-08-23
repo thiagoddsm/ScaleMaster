@@ -1,14 +1,15 @@
+
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
 import { volunteers, events, teamSchedules } from '@/lib/data';
 import { generateSchedule, GenerateScheduleOutput } from '@/ai/flows/smart-schedule-generation';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 
 export default function SchedulePage() {
@@ -19,7 +20,7 @@ export default function SchedulePage() {
   const [result, setResult] = useState<GenerateScheduleOutput | null>(null);
 
   const years = Array.from({ length: 10 }, (_, i) => (new Date().getFullYear() - 5 + i).toString());
-  const months = Array.from({ length: 12 }, (_, i) => ({ value: (i + 1).toString(), label: new Date(0, i).toLocaleString('default', { month: 'long' }) }));
+  const months = Array.from({ length: 12 }, (_, i) => ({ value: (i + 1).toString(), label: new Date(0, i).toLocaleString('pt-BR', { month: 'long' }) }));
 
   const handleGenerateClick = async () => {
     setIsLoading(true);
@@ -45,7 +46,15 @@ export default function SchedulePage() {
     }
   };
   
-  const renderableResult = result?.scaleTable?.replace(/\|/g, ' | ') || '';
+  const parsedTable = useMemo(() => {
+    if (!result?.scaleTable) {
+      return { header: [], rows: [] };
+    }
+    const lines = result.scaleTable.trim().split('\n');
+    const header = lines[0].split('|').map(h => h.trim()).filter(Boolean);
+    const rows = lines.slice(2).map(line => line.split('|').map(cell => cell.trim()).filter(Boolean));
+    return { header, rows };
+  }, [result]);
 
 
   return (
@@ -109,19 +118,27 @@ export default function SchedulePage() {
                     <CardTitle>Tabela de Escala</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="prose prose-sm max-w-none dark:prose-invert">
-                        <ReactMarkdown 
-                          components={{
-                            table: ({node, ...props}) => <table className="table-auto w-full" {...props} />,
-                            thead: ({node, ...props}) => <thead className="bg-muted" {...props} />,
-                            tbody: ({node, ...props}) => <tbody {...props} />,
-                            tr: ({node, ...props}) => <tr className="border-b" {...props} />,
-                            th: ({node, ...props}) => <th className="p-2 text-left" {...props} />,
-                            td: ({node, ...props}) => <td className="p-2 align-top" {...props} />,
-                          }}
-                        >
-                            {renderableResult}
-                        </ReactMarkdown>
+                    <div className="border rounded-md">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    {parsedTable.header.map((header, index) => <TableHead key={index}>{header}</TableHead>)}
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {parsedTable.rows.length > 0 ? parsedTable.rows.map((row, rowIndex) => (
+                                    <TableRow key={rowIndex}>
+                                        {row.map((cell, cellIndex) => <TableCell key={cellIndex}>{cell}</TableCell>)}
+                                    </TableRow>
+                                )) : (
+                                     <TableRow>
+                                        <TableCell colSpan={parsedTable.header.length} className="h-24 text-center">
+                                            Nenhum dado para exibir.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
                     </div>
                 </CardContent>
             </Card>
