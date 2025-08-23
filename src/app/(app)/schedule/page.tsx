@@ -159,22 +159,23 @@ export default function SchedulePage() {
               <Card>
                   <CardHeader>
                       <CardTitle>Relatório Complementar</CardTitle>
+                      <CardDescription>Análise e métricas da escala gerada pela IA.</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4 text-sm">
+                  <CardContent className="space-y-6 text-sm">
                       <div>
-                          <h3 className="font-semibold">Taxa de Preenchimento</h3>
+                          <h3 className="font-semibold text-base mb-2">Taxa de Preenchimento</h3>
                           <p className="text-muted-foreground">{result.report.fillRate}</p>
                       </div>
                       <div>
-                          <h3 className="font-semibold">Distribuição por Voluntário</h3>
+                          <h3 className="font-semibold text-base mb-2">Distribuição por Voluntário</h3>
                           <ReactMarkdown className="prose prose-sm dark:prose-invert text-muted-foreground whitespace-pre-wrap">{result.report.volunteerDistribution}</ReactMarkdown>
                       </div>
                       <div>
-                          <h3 className="font-semibold">Análise de Gargalos</h3>
+                          <h3 className="font-semibold text-base mb-2">Análise de Gargalos</h3>
                            <ReactMarkdown className="prose prose-sm dark:prose-invert text-muted-foreground whitespace-pre-wrap">{result.report.bottlenecks}</ReactMarkdown>
                       </div>
                       <div>
-                          <h3 className="font-semibold">Recomendações</h3>
+                          <h3 className="font-semibold text-base mb-2">Recomendações</h3>
                           <p className="text-muted-foreground">{result.report.recommendations}</p>
                       </div>
                   </CardContent>
@@ -183,6 +184,7 @@ export default function SchedulePage() {
               <Card>
                   <CardHeader>
                       <CardTitle>Saída de Dados (JSON)</CardTitle>
+                      <CardDescription>Abaixo está o resultado JSON bruto retornado pela IA.</CardDescription>
                   </CardHeader>
                   <CardContent>
                       <pre className="bg-muted p-4 rounded-md overflow-x-auto text-xs max-h-[400px]">
