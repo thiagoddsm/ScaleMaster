@@ -87,7 +87,7 @@ Equipes e Rotação:
 2.2. REGRAS DE NEGÓCIO E OTIMIZAÇÃO
 Regra de Unicidade: Um voluntário não pode ser alocado para mais de uma vaga no mesmo evento.
 
-Regra de Competência: Um voluntário só pode ser alocado na Area_de_Servico em que está cadastrado.
+Regra de Competência: Um voluntário só pode ser alocado na 'Area_de_Servico' em que está cadastrado.
 
 Regra de Disponibilidade: A lista 'availability' de um voluntário deve ser estritamente respeitada. Um voluntário só pode ser escalado para um evento se o nome do evento ('name' no objeto de evento) constar em sua lista de 'availability'.
 
@@ -95,9 +95,9 @@ Regra de Rotação: A escala de equipes por semana (Alpha -> Bravo -> Charlie ->
 
 Regra da 5ª Semana: Se um mês tiver uma quinta semana que precise de cobertura, a responsabilidade retorna para a Equipe Alpha.
 
-Regra de Otimização (Justiça): Ao escolher entre candidatos qualificados, sempre priorize aquele com o menor valor em Contagem_Servicos_Mes.
+Regra de Otimização (Justiça): Ao escolher entre candidatos qualificados, sempre priorize aquele com o menor valor em Contagem_Servicos_Mes (um contador que você deve inicializar e manter).
 
-Critério de Desempate: Em caso de empate na Contagem_Servicos_Mes, desempate escolhendo o voluntário com o ID_Voluntario de menor valor em ordem alfanumérica.
+Critério de Desempate: Em caso de empate na Contagem_Servicos_Mes, desempate escolhendo o voluntário com o 'id' de menor valor em ordem alfanumérica.
 
 2.3. ALGORITMO DE ALOCAÇÃO SEQUENCIAL
 Execute as seguintes fases e passos na ordem exata apresentada.
@@ -105,20 +105,20 @@ Execute as seguintes fases e passos na ordem exata apresentada.
 Fase 1: Configuração e Preparação
 Definir Período: Identifique o mês e ano da escala (Mês: {{month}}, Ano: {{year}}).
 
-Expandir Eventos: Para todos os eventos do tipo "Fixo Semanal", crie uma ocorrência para cada data correspondente dentro do mês. Eventos pontuais ocorrem apenas na sua data específica.
+Expandir Eventos: Para todos os eventos do tipo "Semanal", crie uma ocorrência para cada data correspondente dentro do mês. Eventos pontuais ocorrem apenas na sua data específica.
 
-Mapear Equipes: Crie um mapa Data -> ID_Equipe para cada dia do mês, seguindo a rotação semanal fornecida nos dados de entrada.
+Mapear Equipes: Crie um mapa Data -> nome da Equipe para cada dia do mês, seguindo a rotação semanal fornecida nos dados de entrada.
 
-Validação Pré-Alocação: Para cada Area em cada Demanda de todos os eventos, verifique se existe pelo menos um Voluntario cuja Area_de_Servico corresponda. Se uma área demandada não existir no cadastro, marque todas as vagas para essa área com o erro: "FALHA: Área de Serviço ('[Nome da Área]') não encontrada no cadastro de voluntários." e não prossiga com a alocação para essa vaga específica.
+Validação Pré-Alocação: Para cada area em cada demanda de todos os eventos, verifique se existe pelo menos um voluntario cuja lista 'areas' contenha a area da demanda. Se uma área demandada não existir no cadastro de nenhum voluntário, marque todas as vagas para essa área com o erro: "FALHA: Área de Serviço ('[Nome da Área]') não encontrada no cadastro de voluntários." e não prossiga com a alocação para essa vaga específica.
 
 Fase 2: Processo de Geração da Escala
-Processe cada evento em ordem cronológica. Para cada evento, processe cada Demanda. Para cada Demanda, itere de 1 até a Quantidade para preencher cada vaga individualmente. Para cada vaga, aplique o seguinte funil de filtragem:
+Processe cada evento em ordem cronológica. Para cada evento, processe cada demanda ('areas' do evento). Para cada demanda, itere de 1 até 'volunteersNeeded' para preencher cada vaga individualmente. Para cada vaga, aplique o seguinte funil de filtragem:
 
 Passo 2.1: Filtro por Competência (Área de Serviço)
 
 Crie uma lista de candidatos a partir de todos os voluntários.
 
-Filtre-a, mantendo apenas voluntários cuja Area_de_Servico seja idêntica à Area da vaga.
+Filtre-a, mantendo apenas voluntários cuja lista 'areas' contenha a area da vaga.
 
 Passo 2.2: Filtro por Disponibilidade de Evento
 
@@ -130,9 +130,9 @@ Passo 2.3: Filtro por Equipe da Semana
 
 Use a lista do passo anterior.
 
-Consulte o mapa Data -> ID_Equipe para obter a equipe responsável.
+Consulte o mapa Data -> Equipe para obter a equipe responsável.
 
-Filtre a lista, mantendo apenas voluntários cujo ID_Equipe corresponda à equipe da semana.
+Filtre a lista, mantendo apenas voluntários cujo 'team' corresponda à equipe da semana.
 
 Passo 2.4: Seleção Final, Alocação e Diagnóstico
 
@@ -150,7 +150,7 @@ SE A LISTA CONTIVER CANDIDATOS:
 
 Aplique a Regra de Unicidade: Remova candidatos já alocados em outra vaga deste mesmo evento.
 
-Aplique a Otimização e Desempate: Ordene os candidatos restantes por Contagem_Servicos_Mes (crescente) e, em seguida, por ID_Voluntario (alfanumérico).
+Aplique a Otimização e Desempate: Ordene os candidatos restantes por Contagem_Servicos_Mes (crescente) e, em seguida, por 'id' (alfanumérico).
 
 Alocação: Escale o primeiro voluntário da lista ordenada.
 
@@ -169,7 +169,7 @@ Gere uma tabela com as colunas: | Data | Dia da Semana | Evento | Área de Servi
 - Recomendações: Com base nos gargalos, forneça uma sugestão curta para melhorar futuras escalas (ex: "Recomenda-se recrutar mais voluntários para a área de 'Projeção' disponíveis para o 'Culto da Tarde'").
 
 3.3. Saída de Dados (JSON)
-Gere um array de objetos JSON para 'scheduleData', onde cada objeto representa um dia com eventos, seguindo o schema definido.
+Gere um array de objetos JSON para 'scheduleData', onde cada objeto representa um dia com eventos, seguindo o schema definido na declaração de output.
 
 `,
 });
@@ -181,7 +181,10 @@ const smartScheduleGenerationFlow = ai.defineFlow(
     outputSchema: GenerateScheduleOutputSchema,
   },
   async input => {
-    const { output } = await prompt(input);
-    return output!;
+    // Initialize service count for volunteers
+    const volunteersWithCount = input.volunteers.map((v: any) => ({ ...v, Contagem_Servicos_Mes: 0 }));
+
+    const response = await prompt({ ...input, volunteers: volunteersWithCount });
+    return response.output!;
   }
 );
