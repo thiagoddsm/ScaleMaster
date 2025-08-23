@@ -9,8 +9,6 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import type { Volunteer, Event, TeamSchedule } from '@/lib/types';
-
 
 const GenerateScheduleInputSchema = z.object({
   year: z.number().describe('The year for which to generate the schedule.'),
@@ -22,6 +20,14 @@ const GenerateScheduleInputSchema = z.object({
 export type GenerateScheduleInput = z.infer<typeof GenerateScheduleInputSchema>;
 
 
+const ScheduleItemSchema = z.object({
+    evento: z.string(),
+    area: z.string(),
+    voluntario_alocado: z.string().nullable(),
+    status: z.enum(["Preenchida", "Falha"]),
+    motivo: z.string().nullable(),
+});
+
 const GenerateScheduleOutputSchema = z.object({
     scaleTable: z.string().describe("A Markdown table representing the generated schedule."),
     report: z.object({
@@ -30,7 +36,7 @@ const GenerateScheduleOutputSchema = z.object({
         bottlenecks: z.string().describe("Analysis of bottlenecks in the schedule."),
         recommendations: z.string().describe("Recommendations for improving future schedules."),
     }).describe("A complementary report with analytics about the schedule."),
-    jsonData: z.record(z.string(), z.any()).describe("The generated schedule in JSON format."),
+    jsonData: z.record(z.string(), z.array(ScheduleItemSchema)).describe("The generated schedule in JSON format."),
 });
 export type GenerateScheduleOutput = z.infer<typeof GenerateScheduleOutputSchema>;
 
