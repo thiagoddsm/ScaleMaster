@@ -51,23 +51,24 @@ const prompt = ai.definePrompt({
     1.  **Determine Event Dates:** First, identify all event occurrences for the given month and year.
         *   For 'Semanal' events, calculate all dates for the specified 'dayOfWeek'.
         *   For 'Pontual' events, check if their 'date' falls within the requested month and year.
-    2.  **Generate All Potential Assignments:** For each event occurrence, create a list of every single required position (e.g., Som Pos. 1, Recepção Pos. 1, Recepção Pos. 2).
-    3.  **Filter and Assign:** Now, iterate through this complete list of potential assignments and follow these rules for each one:
-        *   **Area Filtering:** Check if the 'areasToSchedule' input is provided and not empty. If it is, and the current assignment's area is NOT in 'areasToSchedule', you MUST discard this assignment and move to the next one. Do NOT include it in the final output.
-        *   **Assign Volunteer:** If the assignment's area is in the filter (or if no filter is provided), proceed to find a volunteer.
+    2.  **Generate All Potential Assignments:** For each event occurrence, create a list of every single required position (e.g., Som Pos. 1, Recepção Pos. 1, Recepção Pos. 2). This is your master list of VAGAS.
+    3.  **Filter and Assign:** Now, iterate through your master list of VAGAS and for each vaga, create ONE assignment object.
+        *   **Area Filtering:** First, check if the 'areasToSchedule' input is provided and not empty. If it is, and the current vaga's area is NOT in 'areasToSchedule', you MUST discard this vaga. Do NOT include it in the final output.
+        *   **Assign Volunteer:** If the vaga's area passes the filter (or if no filter is provided), proceed to find a suitable volunteer.
             a.  Identify the **responsible team** for the event's date using the 'teamSchedules' data.
             b.  Find a volunteer who meets ALL the following criteria:
                 i.   Is a member of the **responsible team**.
                 ii.  Serves in the required **area**.
                 iii. Is available for that specific **event name** (e.g., 'Culto da família').
                 iv.  Is **not already assigned** to another position on the same day. A volunteer can only take one position per day.
-            c.  **Create Output:** Create one assignment object for the position.
-                *   If a suitable volunteer is found, assign their name to the 'volunteer' field and set 'reason' to null.
-                *   If no suitable volunteer is found, set 'volunteer' to null and provide a **brief, clear reason** in the 'reason' field (e.g., "Equipe sem voluntários para a área", "Voluntário indisponível", "Voluntários já alocados").
+            c.  **Create Output Object:** Based on the outcome, create ONE assignment object for the vaga.
+                *   If a suitable volunteer is found, set their name in the 'volunteer' field and the 'reason' field to null.
+                *   If no suitable volunteer is found, set the 'volunteer' field to null and provide a **brief, clear reason** in the 'reason' field (e.g., "Equipe sem voluntários para a área", "Voluntário indisponível", "Voluntários já alocados").
     4.  **Final Output Format:**
         *   The final output MUST be a valid JSON object matching the provided schema.
         *   The 'eventUniqueName' must be in the format "Event Name - dd/MM". Use two digits for day and month.
-        *   Ensure all event occurrences within the month are processed.
+        *   Ensure all event occurrences within the month that pass the area filter are processed.
+        *   There must be strictly one output object per required position. No duplicates.
 
     **Input Data:**
     - Month: {{{month}}}
