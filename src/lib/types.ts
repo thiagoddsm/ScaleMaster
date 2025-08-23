@@ -1,4 +1,4 @@
-import { GenerateScheduleOutput } from "@/ai/flows/smart-schedule-generation";
+import { GenerateScheduleOutput, ScheduleItem } from "@/ai/flows/smart-schedule-generation";
 
 export type Volunteer = {
   id: string;
@@ -64,3 +64,8 @@ export type SavedSchedule = {
   month: number;
   data: GenerateScheduleOutput;
 }
+
+export type ScheduleAssignment = ScheduleItem & {
+  fullDate: string;
+  dayOfWeek: string;
+};
