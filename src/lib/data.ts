@@ -36,7 +36,7 @@ export const events: Event[] = [
     dayOfWeek: 'Domingo',
     time: '10:00',
     areas: [
-      { name: 'Som', volunteersNeeded: 2 },
+      { name: 'Som', volunteersNeeded: 1 },
     ],
     responsible: 'Pastor Jonas',
   },
@@ -67,3 +67,13 @@ export const userPermissions: UserPermission[] = [
     // based on the adminUserEmail. This array can be used for other
     // specific user permissions in the future.
 ];
+
+export type GeneratedSchedule = {
+  assignments: {
+    eventUniqueName: string;
+    area: string;
+    position: number;
+    volunteer: string | null;
+    reason: string | null;
+  }[];
+};
