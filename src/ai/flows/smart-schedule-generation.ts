@@ -18,6 +18,7 @@ const GenerateScheduleInputSchema = z.object({
   events: z.array(z.any()).describe('A list of all possible events.'),
   teams: z.array(z.any()).describe('A list of all teams.'),
   teamSchedules: z.array(z.any()).describe('The rotation schedule for the teams.'),
+  areasToSchedule: z.array(z.string()).describe('A list of service areas to generate the schedule for. If the list is empty, generate for all areas required by the events.'),
 });
 export type GenerateScheduleInput = z.infer<typeof GenerateScheduleInputSchema>;
 
@@ -50,21 +51,24 @@ const prompt = ai.definePrompt({
     1.  **Determine Event Dates:** First, identify all event occurrences for the given month and year.
         *   For 'Semanal' events, calculate all dates for the specified 'dayOfWeek'.
         *   For 'Pontual' events, check if their 'date' falls within the requested month and year.
-    2.  **Identify Responsible Team:** For each event date, determine the responsible team based on the 'teamSchedules' data. The team schedule dictates which team is active for each week (Sunday to Saturday).
-    3.  **Assign Volunteers:** For each required position in an event:
+    2.  **Filter by Area (if applicable):** Check if the 'areasToSchedule' list is provided and not empty.
+        *   If it is, you MUST ONLY generate assignments for the event areas that are present in the 'areasToSchedule' list.
+        *   If 'areasToSchedule' is empty or not provided, generate assignments for all areas required by each event.
+    3.  **Identify Responsible Team:** For each event date, determine the responsible team based on the 'teamSchedules' data. The team schedule dictates which team is active for each week (Sunday to Saturday).
+    4.  **Assign Volunteers:** For each required position in an event (that matches the area filter):
         *   Find a volunteer who meets ALL the following criteria:
             a.  Is a member of the **responsible team** for that week.
             b.  Serves in the required **area**.
             c.  Is available for that specific **event name** (e.g., 'Culto da família').
             d.  Is **not already assigned** to another position on the same day. A volunteer can only take one position per day.
-    4.  **Fill Positions:**
+    5.  **Fill Positions:**
         *   If a suitable volunteer is found, assign their name to the 'volunteer' field and set 'reason' to null.
         *   If no suitable volunteer is found, set 'volunteer' to null and provide a **brief, clear reason** in the 'reason' field (e.g., "Equipe sem voluntários para a área", "Voluntário indisponível", "Voluntários já alocados").
-    5.  **Output Format:**
+    6.  **Output Format:**
         *   The final output MUST be a valid JSON object matching the provided schema.
-        *   For each position required by an event on a specific date, create one assignment object.
+        *   For each position required by a filtered event on a specific date, create one assignment object.
         *   The 'eventUniqueName' must be in the format "Event Name - dd/MM".
-        *   **CRITICAL: Do NOT include any assignments for areas that are not required for an event.**
+        *   **CRITICAL: Do NOT include any assignments for areas that were not requested in the 'areasToSchedule' input (if provided).**
 
     **Input Data:**
     - Month: {{{month}}}
@@ -73,6 +77,7 @@ const prompt = ai.definePrompt({
     - Events: {{{json events}}}
     - Teams: {{{json teams}}}
     - Team Rotation Schedule: {{{json teamSchedules}}}
+    - Areas to Schedule: {{{json areasToSchedule}}}
   `,
 });
 
