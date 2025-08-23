@@ -1,5 +1,7 @@
 import type { Volunteer, Event, Team, TeamSchedule, AreaOfService, UserPermission } from './types';
 
+export const adminUserEmail = "thiagoddsm@gmail.com";
+
 export const areasOfService: AreaOfService[] = [
     { name: "Apoio" },
     { name: "Bistro" },
@@ -216,16 +218,7 @@ export const savedSchedules: any[] = [];
 
 // This is a mock for user permissions. In a real app, this would be in a database.
 export const userPermissions: UserPermission[] = [
-    // Add mock data here if needed for testing, e.g.
-    // {
-    //     userId: 'some-firebase-uid',
-    //     userDisplayName: 'Admin User',
-    //     userPhotoURL: '',
-    //     canManageVolunteers: true,
-    //     canManageEvents: true,
-    //     canManageAreas: true,
-    //     canManageTeams: true,
-    //     canGenerateSchedules: true,
-    //     canManageSettings: true,
-    // }
+    // The master admin permissions are now handled in the component
+    // based on the adminUserEmail. This array can be used for other
+    // specific user permissions in the future.
 ];

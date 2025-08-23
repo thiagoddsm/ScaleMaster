@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/use-auth';
 import type { UserPermission } from '@/lib/types';
-import { userPermissions as initialUserPermissions } from '@/lib/data';
+import { userPermissions as initialUserPermissions, adminUserEmail } from '@/lib/data';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 
@@ -18,22 +17,53 @@ export default function SettingsPage() {
     // In a real app, you would fetch all users, not just the current one.
     // For this example, we'll just show the current logged-in user.
     const displayUsers = user ? [user] : [];
+
+    const isMasterAdmin = user?.email === adminUserEmail;
+
+    useEffect(() => {
+        if (isMasterAdmin && user) {
+            const adminPerms = {
+                userId: user.uid,
+                userDisplayName: user.displayName || 'Admin',
+                userPhotoURL: user.photoURL || '',
+                canManageVolunteers: true,
+                canManageEvents: true,
+                canManageAreas: true,
+                canManageTeams: true,
+                canGenerateSchedules: true,
+                canManageSettings: true,
+            };
+            // Ensure admin permissions are always set if not already present
+            setPermissions(prev => {
+                const existing = prev.find(p => p.userId === user.uid);
+                if (existing) {
+                    return prev.map(p => p.userId === user.uid ? adminPerms : p);
+                }
+                return [...prev, adminPerms];
+            });
+        }
+    }, [isMasterAdmin, user]);
     
     const handlePermissionChange = (userId: string, permissionKey: keyof Omit<UserPermission, 'userId' | 'userDisplayName' | 'userPhotoURL'>, value: boolean) => {
+        // For the demo, changing permissions for the admin is disabled visually
+        // but we keep the logic here for future expansion.
+        if (user?.email === adminUserEmail) {
+            return; // Don't allow changing master admin permissions
+        }
+
         setPermissions(prevPermissions => {
             const userIndex = prevPermissions.findIndex(p => p.userId === userId);
             
             if (userIndex > -1) {
-                 // Update existing permission
                  return prevPermissions.map((p, index) => 
                     index === userIndex ? { ...p, [permissionKey]: value } : p
                 );
             } else {
-                // Add new permission entry for the user
+                const currentUser = displayUsers.find(u => u.uid === userId);
                 const newUserPermission: UserPermission = {
                     userId,
-                    userDisplayName: user?.displayName || 'Unknown User',
-                    userPhotoURL: user?.photoURL || '',
+                    userDisplayName: currentUser?.displayName || 'Unknown User',
+                    userPhotoURL: currentUser?.photoURL || '',
                     canManageVolunteers: false,
                     canManageEvents: false,
                     canManageAreas: false,
@@ -46,7 +76,6 @@ export default function SettingsPage() {
             }
         });
         
-        // Here you would typically save the updated permissions to your database.
         console.log(`Permission '${permissionKey}' for user ${userId} set to ${value}`);
     };
 
@@ -97,6 +126,7 @@ export default function SettingsPage() {
                             <TableBody>
                                 {displayUsers.map((displayUser) => {
                                     const userPerms = getUserPermissions(displayUser.uid);
+                                    const isCurrentUserAdmin = displayUser.email === adminUserEmail;
                                     return (
                                         <TableRow key={displayUser.uid}>
                                             <TableCell>
@@ -106,15 +136,18 @@ export default function SettingsPage() {
                                                         <AvatarFallback>{displayUser.displayName?.charAt(0)}</AvatarFallback>
                                                     </Avatar>
                                                     <span className="font-medium">{displayUser.displayName}</span>
+                                                    {isCurrentUserAdmin && <Badge>Admin</Badge>}
                                                 </div>
                                             </TableCell>
-                                            {permissionLabels.map(({ key, label }) => (
+                                            {permissionLabels.map(({ key }) => (
                                                 <TableCell key={key}>
                                                     <div className="flex items-center space-x-2">
                                                         <Switch
                                                             id={`${displayUser.uid}-${key}`}
                                                             checked={userPerms[key]}
                                                             onCheckedChange={(value) => handlePermissionChange(displayUser.uid, key, value)}
+                                                            disabled={isCurrentUserAdmin}
+                                                            aria-readonly={isCurrentUserAdmin}
                                                         />
                                                     </div>
                                                 </TableCell>
