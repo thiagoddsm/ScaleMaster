@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { TeamSchedule } from '@/lib/types';
 import { ArrowUpDown } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const DND_TYPE_TEAM = 'team';
 
@@ -18,6 +19,7 @@ export default function TeamSchedulePage() {
   const [rotationStartDate, setRotationStartDate] = useState<string>('2024-07-07');
   const [teamOrder, setTeamOrder] = useState<string[]>(initialTeamSchedules.map(ts => ts.team).filter((t, i, a) => a.indexOf(t) === i));
   const [schedules, setSchedules] = useState<TeamSchedule[]>(initialTeamSchedules);
+  const { toast } = useToast();
 
   const generatedSchedule = useMemo(() => {
     if (!rotationStartDate || teamOrder.length === 0) return [];
@@ -53,6 +55,17 @@ export default function TeamSchedulePage() {
   
   const handleDragOver = (e: React.DragEvent<HTMLTableRowElement>) => {
     e.preventDefault(); 
+  };
+
+  const handleSave = () => {
+    // In a real app, you would save this data to a database.
+    // For this example, we'll just update the state and show a toast.
+    setSchedules(generatedSchedule);
+    toast({
+      title: 'Sucesso!',
+      description: 'A configuração da rotação de equipes foi salva.',
+      className: 'bg-primary text-primary-foreground',
+    });
   };
 
 
@@ -110,7 +123,7 @@ export default function TeamSchedulePage() {
                             </TableBody>
                         </Table>
                      </div>
-                     <Button className="w-full" disabled>Salvar Configuração (Em breve)</Button>
+                     <Button className="w-full" onClick={handleSave}>Salvar Configuração</Button>
                 </CardContent>
             </Card>
         </div>
