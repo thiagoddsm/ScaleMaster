@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { format, addDays, startOfWeek, endOfWeek } from 'date-fns';
+import { format, addDays, startOfWeek, endOfWeek, parse } from 'date-fns';
 
 const monthOptions = [
   { value: '1', label: 'Janeiro' }, { value: '2', label: 'Fevereiro' },
@@ -38,6 +38,7 @@ export default function GenerateSchedulePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [schedule, setSchedule] = useState<GeneratedSchedule | null>(null);
   const { toast } = useToast();
+  const [teamSchedules, setTeamSchedules] = useState<TeamSchedule[]>([]);
 
   const getTeamSchedules = (): TeamSchedule[] => {
     try {
@@ -61,9 +62,11 @@ export default function GenerateSchedulePage() {
                 endDate: format(weekEndDate, 'yyyy-MM-dd'),
             });
         }
+        setTeamSchedules(generated);
         return generated;
     } catch (error) {
         console.error("Failed to generate team schedules from localStorage, using initial data.", error);
+        setTeamSchedules(initialTeamSchedules);
         return initialTeamSchedules;
     }
   };
@@ -82,7 +85,7 @@ export default function GenerateSchedulePage() {
     setIsLoading(true);
     setSchedule(null);
     try {
-      const teamSchedules = getTeamSchedules();
+      const generatedTeamSchedules = getTeamSchedules();
 
       const result = await generateSchedule({
         month: parseInt(month),
@@ -90,7 +93,7 @@ export default function GenerateSchedulePage() {
         volunteers,
         events,
         teams,
-        teamSchedules,
+        teamSchedules: generatedTeamSchedules,
         areasToSchedule: selectedAreas,
       });
 
@@ -128,6 +131,18 @@ export default function GenerateSchedulePage() {
       checked ? [...prev, areaName] : prev.filter(name => name !== areaName)
     );
   };
+  
+  const getTeamForDate = (dateStr: string) => {
+    const schedules = teamSchedules.length > 0 ? teamSchedules : getTeamSchedules();
+    const date = parse(dateStr, 'dd/MM/yyyy', new Date());
+    
+    const schedule = schedules.find(s => {
+        const startDate = new Date(s.startDate + 'T00:00:00');
+        const endDate = new Date(s.endDate + 'T23:59:59');
+        return date >= startDate && date <= endDate;
+    });
+    return schedule?.team || null;
+  }
 
   const groupedAssignments = useMemo(() => {
     if (!schedule) return null;
@@ -222,37 +237,46 @@ export default function GenerateSchedulePage() {
                     const dateA = keyA.split(' - ')[1].split('/').reverse().join('');
                     const dateB = keyB.split(' - ')[1].split('/').reverse().join('');
                     return dateA.localeCompare(dateB);
-                 }).map(([eventUniqueName, assignments]) => (
-                    <div key={eventUniqueName}>
-                        <h3 className="font-semibold text-lg mb-2">{eventUniqueName}</h3>
-                        <div className="border rounded-md">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="w-[200px]">Área</TableHead>
-                                        <TableHead>Voluntário Alocado</TableHead>
-                                        <TableHead>Observação</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {assignments.sort((a,b) => a.area.localeCompare(b.area)).map((a, index) => (
-                                        <TableRow key={`${a.area}-${a.position}-${index}`}>
-                                            <TableCell className="font-medium">{a.area} (Pos. {a.position})</TableCell>
-                                            <TableCell>
-                                                {a.volunteer ? (
-                                                    <Badge variant="default">{a.volunteer}</Badge>
-                                                ) : (
-                                                    <Badge variant="destructive">Não alocado</Badge>
-                                                )}
-                                            </TableCell>
-                                            <TableCell className="text-sm text-muted-foreground">{a.reason || '-'}</TableCell>
+                 }).map(([eventUniqueName, assignments]) => {
+                    const datePart = eventUniqueName.split(' - ')[1];
+                    const fullDateStr = `${datePart}/${year}`;
+                    const team = getTeamForDate(fullDateStr);
+
+                    return (
+                        <div key={eventUniqueName}>
+                            <div className="flex items-center gap-4 mb-2">
+                                <h3 className="font-semibold text-lg">{eventUniqueName}</h3>
+                                {team && <Badge>{team}</Badge>}
+                            </div>
+                            <div className="border rounded-md">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead className="w-[200px]">Área</TableHead>
+                                            <TableHead>Voluntário Alocado</TableHead>
+                                            <TableHead>Observação</TableHead>
                                         </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {assignments.sort((a,b) => a.area.localeCompare(b.area)).map((a, index) => (
+                                            <TableRow key={`${a.area}-${a.position}-${index}`}>
+                                                <TableCell className="font-medium">{a.area} (Pos. {a.position})</TableCell>
+                                                <TableCell>
+                                                    {a.volunteer ? (
+                                                        <Badge variant="default">{a.volunteer}</Badge>
+                                                    ) : (
+                                                        <Badge variant="destructive">Não alocado</Badge>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="text-sm text-muted-foreground">{a.reason || '-'}</TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    )
+                 })}
             </CardContent>
         </Card>
       )}
