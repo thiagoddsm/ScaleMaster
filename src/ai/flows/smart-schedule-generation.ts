@@ -89,7 +89,7 @@ Regra de Unicidade: Um voluntário não pode ser alocado para mais de uma vaga n
 
 Regra de Competência: Um voluntário só pode ser alocado na Area_de_Servico em que está cadastrado.
 
-Regra de Disponibilidade: A lista 'availability' de um voluntário deve ser estritamente respeitada. Um voluntário só pode ser escalado para um evento se o nome do evento constar em sua lista de 'availability'.
+Regra de Disponibilidade: A lista 'availability' de um voluntário deve ser estritamente respeitada. Um voluntário só pode ser escalado para um evento se o nome do evento ('name' no objeto de evento) constar em sua lista de 'availability'.
 
 Regra de Rotação: A escala de equipes por semana (Alpha -> Bravo -> Charlie -> Delta) é obrigatória.
 
@@ -124,7 +124,7 @@ Passo 2.2: Filtro por Disponibilidade de Evento
 
 Use a lista do passo anterior.
 
-Filtre-a novamente, mantendo apenas voluntários cuja lista 'availability' contenha o Nome_Evento.
+Filtre-a novamente, mantendo apenas voluntários cujo nome do evento atual ('name' do objeto de evento) esteja presente em sua lista 'availability'.
 
 Passo 2.3: Filtro por Equipe da Semana
 
