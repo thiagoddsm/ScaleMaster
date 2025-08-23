@@ -34,7 +34,7 @@ export default function LoginPage() {
             <Blocks className="h-10 w-10 text-primary" />
           </div>
           <CardTitle className="text-2xl">Bem-vindo ao ScaleMaster</CardTitle>
-          <CardDescription>Entre com sua conta Google para continuar.</CardDescription>
+          <CardDescription>Crie sua conta ou faça login com o Google para continuar.</CardDescription>
         </CardHeader>
         <CardContent>
           <Button 
@@ -47,7 +47,7 @@ export default function LoginPage() {
             ) : (
                 <>
                     <GoogleIcon />
-                    Entrar com Google
+                    Continuar com Google
                 </>
             )}
           </Button>
