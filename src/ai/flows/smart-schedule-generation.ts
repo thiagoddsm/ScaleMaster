@@ -134,19 +134,12 @@ SE A LISTA ESTIVER VAZIA: A vaga falhou. Pule diretamente para a seção de diag
 
 SE A LISTA CONTIVER CANDIDATOS:
 Aplique a Regra de Unicidade: Remova candidatos já alocados em outra vaga neste mesmo evento.
+Se após a aplicação da Regra de Unicidade a lista ficar vazia, a vaga falhou. Pule para a seção de diagnóstico.
+
 Aplique a Otimização e Desempate: Ordene os candidatos restantes por 'Contagem_Servicos_Mes' (crescente) e, em seguida, por 'id' (alfanumérico).
 
-Se após a remoção de unicidade e ordenação, a lista de candidatos ficar vazia, a vaga falhou. Pule para a seção de diagnóstico.
-
-Auditoria Final de Conformidade (Trava de Segurança): Pegue o primeiro voluntário da lista (candidato final). Este candidato DEVE OBRIGATORIAMENTE passar na seguinte auditoria tripla.
-✅ Auditoria de Competência: 'candidato.areas' contém a 'area' da vaga?
-✅ Auditoria de Disponibilidade: 'candidato.availability' contém o 'name' do evento?
-✅ Auditoria de Equipe: 'candidato.team' é a equipe da semana?
-
-Alocação: Se o candidato passar na auditoria, escale-o.
+Alocação: Pegue o primeiro voluntário da lista (candidato final). Escale-o.
 Atualização: Incremente em +1 a 'Contagem_Servicos_Mes' do voluntário alocado.
-
-Se o candidato final falhar em QUALQUER ponto da auditoria, ele será descartado e a vaga será tratada como falha. Pule para a seção de diagnóstico de falha.
 
 SE A VAGA FALHOU: Determine o motivo verificando os filtros em ordem inversa:
 Se a lista ficou vazia no Passo 2.3: "MOTIVO: Voluntários disponíveis não pertencem à equipe da semana ([Nome da Equipe])."
