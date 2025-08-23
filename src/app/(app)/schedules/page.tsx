@@ -4,18 +4,23 @@ import React, { useState, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { savedSchedules as initialSavedSchedules, events as allEvents, areasOfService as allAreas, teams as allTeams } from '@/lib/data';
+import { savedSchedules as initialSavedSchedules, events as allEvents, areasOfService as allAreas, teams as allTeams, volunteers as allVolunteers } from '@/lib/data';
 import type { SavedSchedule, ScheduleAssignment } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
 
 const weekDays = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
 
 export default function SchedulesPage() {
-  const [schedules] = useState<SavedSchedule[]>(initialSavedSchedules);
+  const [schedules, setSchedules] = useState<SavedSchedule[]>(initialSavedSchedules);
   const [year, setYear] = useState<string>(new Date().getFullYear().toString());
   const [month, setMonth] = useState<string>((new Date().getMonth() + 1).toString());
+  const { toast } = useToast();
+
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState("");
@@ -28,6 +33,46 @@ export default function SchedulesPage() {
   const years = Array.from({ length: 10 }, (_, i) => (new Date().getFullYear() - 5 + i).toString());
   const months = Array.from({ length: 12 }, (_, i) => ({ value: (i + 1).toString(), label: new Date(0, i).toLocaleString('pt-BR', { month: 'long' }) }));
 
+  const handleAssignmentChange = (scheduleId: string, assignmentDate: string, assignmentIdentifier: string, newVolunteerId: string) => {
+    const newVolunteer = allVolunteers.find(v => v.id === newVolunteerId);
+    if (!newVolunteer) return;
+
+    setSchedules(prevSchedules => {
+      return prevSchedules.map(schedule => {
+        if (schedule.id !== scheduleId) return schedule;
+
+        const updatedData = {
+          ...schedule.data,
+          scheduleData: schedule.data.scheduleData.map(day => {
+            if (day.date !== assignmentDate) return day;
+
+            return {
+              ...day,
+              assignments: day.assignments.map(assignment => {
+                const currentIdentifier = `${assignment.evento}-${assignment.area}-${assignment.voluntario_alocado}`;
+                if (currentIdentifier !== assignmentIdentifier) return assignment;
+                
+                return {
+                  ...assignment,
+                  voluntario_alocado: newVolunteer.name,
+                  status: "Preenchida" as "Preenchida" | "Falha",
+                  motivo: null,
+                };
+              }),
+            };
+          }),
+        };
+
+        return { ...schedule, data: updatedData };
+      });
+    });
+
+    toast({
+      title: "Escala Atualizada",
+      description: `Voluntário alterado para ${newVolunteer.name}.`
+    });
+  };
+
   const filteredAssignments = useMemo(() => {
     const numericYear = parseInt(year);
     const numericMonth = parseInt(month);
@@ -38,12 +83,13 @@ export default function SchedulesPage() {
         return [];
     }
 
-    const allAssignments: ScheduleAssignment[] = relevantSchedules.flatMap(s => 
+    const allAssignments: (ScheduleAssignment & { scheduleId: string })[] = relevantSchedules.flatMap(s => 
         s.data.scheduleData.flatMap(day => 
             day.assignments.map(assignment => ({
                 ...assignment,
                 fullDate: day.date,
                 dayOfWeek: day.dayOfWeek,
+                scheduleId: s.id,
             }))
         )
     );
@@ -80,7 +126,7 @@ export default function SchedulesPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-foreground">Escalas Salvas</h1>
-        <p className="text-muted-foreground">Consulte as escalas unificadas para um mês e ano específicos.</p>
+        <p className="text-muted-foreground">Consulte e edite as escalas unificadas para um mês e ano específicos.</p>
       </div>
        <Card>
         <CardHeader>
@@ -183,7 +229,10 @@ export default function SchedulesPage() {
               </TableHeader>
               <TableBody>
                 {filteredAssignments.length > 0 ? (
-                  filteredAssignments.map((assignment, index) => (
+                  filteredAssignments.map((assignment, index) => {
+                    const availableVolunteers = allVolunteers.filter(v => v.areas.includes(assignment.area) && v.name !== assignment.voluntario_alocado);
+                    const assignmentIdentifier = `${assignment.evento}-${assignment.area}-${assignment.voluntario_alocado}`;
+                    return(
                     <TableRow key={`${assignment.fullDate}-${assignment.evento}-${assignment.area}-${index}`}>
                       <TableCell>{new Date(assignment.fullDate + 'T00:00:00').toLocaleDateString('pt-BR')}</TableCell>
                       <TableCell>{assignment.dayOfWeek}</TableCell>
@@ -192,14 +241,37 @@ export default function SchedulesPage() {
                       <TableCell>
                         {assignment.equipe && <Badge variant="secondary">{assignment.equipe}</Badge>}
                       </TableCell>
-                      <TableCell>{assignment.voluntario_alocado || <span className="text-muted-foreground italic">{assignment.motivo || '-'}</span>}</TableCell>
+                      <TableCell>
+                        {assignment.voluntario_alocado ? (
+                           <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-auto p-1 text-left font-normal -ml-2">
+                                {assignment.voluntario_alocado}
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start">
+                              {availableVolunteers.length > 0 ? (
+                                availableVolunteers.map(v => (
+                                  <DropdownMenuItem key={v.id} onClick={() => handleAssignmentChange(assignment.scheduleId, assignment.fullDate, assignmentIdentifier, v.id)}>
+                                    {v.name}
+                                  </DropdownMenuItem>
+                                ))
+                              ) : (
+                                <DropdownMenuItem disabled>Nenhum outro voluntário disponível</DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        ) : (
+                          <span className="text-muted-foreground italic">{assignment.motivo || '-'}</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                          <Badge variant={assignment.status === 'Preenchida' ? 'default' : 'destructive'}>
                           {assignment.status}
                          </Badge>
                       </TableCell>
                     </TableRow>
-                  ))
+                  )})
                 ) : (
                   <TableRow>
                     <TableCell colSpan={7} className="h-24 text-center">
