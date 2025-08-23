@@ -28,6 +28,11 @@ const ScheduleItemSchema = z.object({
     motivo: z.string().nullable(),
 });
 
+const ScheduleDaySchema = z.object({
+  date: z.string().describe("The date of the assignments in YYYY-MM-DD format."),
+  assignments: z.array(ScheduleItemSchema).describe("A list of assignments for this date."),
+});
+
 const GenerateScheduleOutputSchema = z.object({
     scaleTable: z.string().describe("A Markdown table representing the generated schedule."),
     report: z.object({
@@ -36,7 +41,7 @@ const GenerateScheduleOutputSchema = z.object({
         bottlenecks: z.string().describe("Analysis of bottlenecks in the schedule."),
         recommendations: z.string().describe("Recommendations for improving future schedules."),
     }).describe("A complementary report with analytics about the schedule."),
-    jsonData: z.record(z.string(), z.array(ScheduleItemSchema)).describe("The generated schedule in JSON format."),
+    scheduleData: z.array(ScheduleDaySchema).describe("The generated schedule data, organized by day."),
 });
 export type GenerateScheduleOutput = z.infer<typeof GenerateScheduleOutputSchema>;
 
@@ -142,25 +147,29 @@ A sua resposta final deve conter as três seções a seguir, sem nenhum texto in
 - Recomendações: Com base nos gargalos, forneça uma sugestão curta para melhorar futuras escalas (ex: "Recomenda-se recrutar mais voluntários para a área de 'Projeção' disponíveis para o 'Culto da Tarde'").
 
 4.3. Saída de Dados (JSON)
-Gere um objeto JSON contendo a escala final, onde cada chave é a data do evento no formato "AAAA-MM-DD".
+Gere um array de objetos JSON, onde cada objeto representa um dia com eventos.
 \`\`\`json
-{
-  "AAAA-MM-DD": [
-    {
-      "evento": "Nome do Evento",
-      "area": "Nome da Area",
-      "voluntario_alocado": "Nome do Voluntário",
-      "status": "Preenchida"
-    },
-    {
-      "evento": "Nome do Evento",
-      "area": "Nome da Area",
-      "voluntario_alocado": null,
-      "status": "Falha",
-      "motivo": "Motivo da falha..."
-    }
-  ]
-}
+[
+  {
+    "date": "AAAA-MM-DD",
+    "assignments": [
+      {
+        "evento": "Nome do Evento",
+        "area": "Nome da Area",
+        "voluntario_alocado": "Nome do Voluntário",
+        "status": "Preenchida",
+        "motivo": null
+      },
+      {
+        "evento": "Nome do Evento",
+        "area": "Nome da Area",
+        "voluntario_alocado": null,
+        "status": "Falha",
+        "motivo": "Motivo da falha..."
+      }
+    ]
+  }
+]
 \`\`\`
 `,
 });

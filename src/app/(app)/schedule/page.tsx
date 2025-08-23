@@ -156,7 +156,7 @@ export default function SchedulePage() {
                 </CardHeader>
                 <CardContent>
                     <pre className="bg-muted p-4 rounded-md overflow-x-auto text-xs">
-                        {JSON.stringify(result.jsonData, null, 2)}
+                        {JSON.stringify(result.scheduleData, null, 2)}
                     </pre>
                 </CardContent>
             </Card>
