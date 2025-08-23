@@ -6,12 +6,13 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Info } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { volunteers, events, teamSchedules } from '@/lib/data';
 import { generateSchedule, GenerateScheduleOutput } from '@/ai/flows/smart-schedule-generation';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 
 
 export default function SchedulePage() {
@@ -155,11 +156,30 @@ export default function SchedulePage() {
                 </CardContent>
             </Card>
 
-            <div className="grid md:grid-cols-2 gap-8">
+            <div className="grid md:grid-cols-1 gap-8">
               <Card>
-                  <CardHeader>
-                      <CardTitle>Relatório Complementar</CardTitle>
-                      <CardDescription>Análise e métricas da escala gerada pela IA.</CardDescription>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                      <div>
+                          <CardTitle>Relatório Complementar</CardTitle>
+                          <CardDescription>Análise e métricas da escala gerada pela IA.</CardDescription>
+                      </div>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" size="icon">
+                                <Info className="h-4 w-4" />
+                                <span className="sr-only">Ver JSON</span>
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-2xl">
+                           <DialogHeader>
+                               <DialogTitle>Saída de Dados (JSON)</DialogTitle>
+                               <DialogDescription>Abaixo está o resultado JSON bruto retornado pela IA.</DialogDescription>
+                           </DialogHeader>
+                            <pre className="bg-muted p-4 rounded-md overflow-x-auto text-xs max-h-[60vh]">
+                                {JSON.stringify(result.scheduleData, null, 2)}
+                            </pre>
+                        </DialogContent>
+                      </Dialog>
                   </CardHeader>
                   <CardContent className="space-y-6 text-sm">
                       <div>
@@ -178,18 +198,6 @@ export default function SchedulePage() {
                           <h3 className="font-semibold text-base mb-2">Recomendações</h3>
                           <p className="text-muted-foreground">{result.report.recommendations}</p>
                       </div>
-                  </CardContent>
-              </Card>
-
-              <Card>
-                  <CardHeader>
-                      <CardTitle>Saída de Dados (JSON)</CardTitle>
-                      <CardDescription>Abaixo está o resultado JSON bruto retornado pela IA.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                      <pre className="bg-muted p-4 rounded-md overflow-x-auto text-xs max-h-[400px]">
-                          {JSON.stringify(result.scheduleData, null, 2)}
-                      </pre>
                   </CardContent>
               </Card>
             </div>
