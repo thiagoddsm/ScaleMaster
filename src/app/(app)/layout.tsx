@@ -2,10 +2,12 @@
 
 import * as React from "react"
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Blocks, Calendar, LayoutDashboard, Users, Construction, Shield, CalendarCheck } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Blocks, Calendar, LayoutDashboard, Users, Construction, Shield, CalendarCheck, LogOut } from 'lucide-react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/use-auth";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const menuItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -18,6 +20,30 @@ const menuItems = [
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, loading, signOut } = useAuth();
+
+  React.useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+  
+  const handleSignOut = async () => {
+    await signOut();
+    router.push('/login');
+  }
+
+  if (loading || !user) {
+    return (
+        <div className="flex h-screen items-center justify-center">
+            <div className="flex items-center space-x-2">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                <span className="text-muted-foreground">Carregando...</span>
+            </div>
+        </div>
+    );
+  }
 
   return (
     <SidebarProvider>
@@ -53,9 +79,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </SidebarContent>
       </Sidebar>
       <SidebarInset>
-        <header className="flex items-center justify-between p-4 border-b md:justify-end">
+        <header className="flex items-center justify-between p-4 border-b">
             <SidebarTrigger className="md:hidden" />
-            <span className="text-sm text-muted-foreground">Bem-vindo ao Gerenciador de Escalas</span>
+            <div className="flex items-center gap-4 ml-auto">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? 'Usuário'} />
+                <AvatarFallback>{user.displayName?.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Sair
+              </Button>
+            </div>
         </header>
         <main className="p-4 md:p-6 lg:p-8">
             {children}
