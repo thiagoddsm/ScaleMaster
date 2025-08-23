@@ -53,3 +53,13 @@ export type UserPermission = {
   canGenerateSchedules: boolean;
   canManageSettings: boolean;
 };
+
+export type GeneratedSchedule = {
+  assignments: {
+    eventUniqueName: string;
+    area: string;
+    position: number;
+    volunteer: string | null;
+    reason: string | null;
+  }[];
+};
