@@ -54,6 +54,7 @@ export type UserPermission = {
   canManageSettings: boolean;
 };
 
+// This type is now defined in the flow file, but kept here for reference if needed elsewhere.
 export type GeneratedSchedule = {
   assignments: {
     eventUniqueName: string;

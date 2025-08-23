@@ -15,7 +15,7 @@ const menuItems = [
   { href: '/events', label: 'Eventos', icon: Calendar },
   { href: '/areas', label: 'Áreas de Serviço', icon: Construction },
   { href: '/teams', label: 'Equipes', icon: Shield },
-  { href: '/schedule', label: 'Escalas', icon: CalendarCheck },
+  { href: '/schedule', label: 'Gerar Escala', icon: CalendarCheck },
 ];
 
 const bottomMenuItems = [

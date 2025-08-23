@@ -9,16 +9,12 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import type { Volunteer, Event, Team, TeamSchedule } from '@/lib/types';
+import type { Event } from '@/lib/types';
 
 const GenerateScheduleInputSchema = z.object({
   month: z.number().min(1).max(12).describe('The month to generate the schedule for (1-12).'),
   year: z.number().min(2024).describe('The year to generate the schedule for.'),
-  volunteers: z.array(z.any()).describe('A list of all available volunteers.'),
   events: z.array(z.any()).describe('A list of all possible events.'),
-  teams: z.array(z.any()).describe('A list of all teams.'),
-  teamSchedules: z.array(z.any()).describe('The rotation schedule for the teams.'),
-  areasToSchedule: z.array(z.string()).describe('A list of service areas to generate the schedule for. If the list is empty, generate for all areas required by the events.'),
 });
 export type GenerateScheduleInput = z.infer<typeof GenerateScheduleInputSchema>;
 
@@ -27,8 +23,8 @@ const GenerateScheduleOutputSchema = z.object({
     eventUniqueName: z.string().describe("The unique name of the event, in the format \"[Event Name] - [dd/MM]\". Use two digits for day and month."),
     area: z.string().describe("The area of service for the assignment."),
     position: z.number().describe("The position number for the assignment (e.g., 1, 2, 3)."),
-    volunteer: z.string().nullable().optional().describe("The name of the assigned volunteer, or null if no one was assigned."),
-    reason: z.string().nullable().optional().describe("The reason for the assignment outcome, especially if a volunteer could not be assigned."),
+    volunteer: z.string().nullable().optional().describe("The name of the assigned volunteer. MUST BE NULL for this step."),
+    reason: z.string().nullable().optional().describe("The reason for the assignment outcome. MUST BE NULL for this step."),
   })).describe("A list of all the volunteer assignments for the requested schedule."),
 });
 export type GenerateScheduleOutput = z.infer<typeof GenerateScheduleOutputSchema>;
@@ -45,28 +41,25 @@ const prompt = ai.definePrompt({
   input: { schema: GenerateScheduleInputSchema },
   output: { schema: GenerateScheduleOutputSchema },
   prompt: `
-    **CONTEXTO E OBJETIVO:**
-    O seu objetivo é criar o esqueleto de uma escala de serviço para um mês específico, com base nos eventos que acontecem. Você NÃO deve alocar nenhum voluntário.
+    **CONTEXT AND OBJECTIVE:**
+    Your goal is to create the skeleton of a service schedule for a specific month, based on the events that take place. You should NOT allocate any volunteers.
 
-    **REGRAS E PROCESSO DE GERAÇÃO:**
+    **RULES AND GENERATION PROCESS:**
 
-    Você deve seguir este processo de 3 etapas na ordem exata.
+    You must follow this 2-step process in the exact order.
 
-    **1. Calcular Datas dos Eventos:**
-    - Para o mês e ano fornecidos, determine todas as datas de ocorrência para cada evento.
-    - Para eventos 'Semanal', encontre todas as datas para o 'dayOfWeek' especificado no mês.
-    - Para eventos 'Pontual', verifique se a 'date' do evento ocorre no mês/ano solicitados.
+    **1. Calculate Event Dates:**
+    - For the given month and year, determine all occurrence dates for each event.
+    - For 'Semanal' (Weekly) events, find all dates for the specified 'dayOfWeek' in the month.
+    - For 'Pontual' (One-time) events, check if the event's 'date' occurs in the requested month/year.
 
-    **2. Gerar a Lista Mestra de Vagas:**
-    - Para cada ocorrência de evento calculada na Etapa 1, e para cada área de serviço necessária nesse evento, crie uma lista de vagas.
-    - Se um evento precisa de 2 voluntários para "Recepção", sua lista mestre de vagas deve conter duas entradas separadas para "Recepção" naquele dia (uma para a Posição 1 e outra para a Posição 2).
-    - Ignore os filtros de 'areasToSchedule' por enquanto. Gere para todas as áreas de todos os eventos.
-
-    **3. Formato de Saída (Output):**
-    - O resultado final deve ser um objeto JSON que corresponda perfeitamente ao schema de saída fornecido.
-    - Cada vaga da Etapa 2 deve resultar em exatamente um objeto no array 'assignments'.
-    - O campo 'eventUniqueName' deve ser no formato "Nome do Evento - dd/MM". Use dois dígitos para dia e mês.
-    - **IMPORTANTE:** Os campos 'volunteer' e 'reason' devem ser **sempre** nulos para esta etapa. Apenas gere a estrutura de vagas.
+    **2. Generate the Master Slot List:**
+    - For each event occurrence calculated in Step 1, and for each service area required in that event, create a list of slots.
+    - If an event needs 2 volunteers for "Recepção", your master slot list must contain two separate entries for "Recepção" on that day (one for Position 1 and another for Position 2).
+    - The final result should be a JSON object that perfectly matches the provided output schema.
+    - Each slot from Step 2 must result in exactly one object in the 'assignments' array.
+    - The 'eventUniqueName' field must be in the format "Event Name - dd/MM". Use two digits for day and month.
+    - **IMPORTANT:** The 'volunteer' and 'reason' fields must **always** be null for this step. Just generate the structure of the slots.
 
     **Input Data:**
     - Month: {{{month}}}
