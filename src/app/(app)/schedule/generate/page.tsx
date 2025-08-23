@@ -1,18 +1,19 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { generateSchedule } from '@/ai/flows/smart-schedule-generation';
-import type { GeneratedSchedule } from '@/lib/types';
-import { volunteers, events, teams, areasOfService } from '@/lib/data';
+import type { GeneratedSchedule, TeamSchedule } from '@/lib/types';
+import { volunteers, events, teams, areasOfService, teamSchedules as initialTeamSchedules } from '@/lib/data';
 import { Loader2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { format, addDays, startOfWeek, endOfWeek } from 'date-fns';
 
 const monthOptions = [
   { value: '1', label: 'Janeiro' }, { value: '2', label: 'Fevereiro' },
@@ -26,6 +27,10 @@ const monthOptions = [
 const currentYear = new Date().getFullYear();
 const yearOptions = Array.from({ length: 5 }, (_, i) => (currentYear + i).toString());
 
+// Keys for localStorage
+const ROTATION_START_DATE_KEY = 'rotationStartDate';
+const TEAM_ORDER_KEY = 'teamOrder';
+
 export default function GenerateSchedulePage() {
   const [month, setMonth] = useState<string>((new Date().getMonth() + 1).toString());
   const [year, setYear] = useState<string>(currentYear.toString());
@@ -33,6 +38,36 @@ export default function GenerateSchedulePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [schedule, setSchedule] = useState<GeneratedSchedule | null>(null);
   const { toast } = useToast();
+
+  const getTeamSchedules = (): TeamSchedule[] => {
+    try {
+        const savedDate = localStorage.getItem(ROTATION_START_DATE_KEY) || '2024-07-07';
+        const savedOrderJSON = localStorage.getItem(TEAM_ORDER_KEY);
+        const teamOrder = savedOrderJSON ? JSON.parse(savedOrderJSON) : initialTeamSchedules.map(ts => ts.team).filter((t, i, a) => a.indexOf(t) === i);
+
+        if (!savedDate || teamOrder.length === 0) return initialTeamSchedules;
+
+        const startDate = new Date(savedDate + 'T12:00:00Z');
+        const generated: TeamSchedule[] = [];
+        
+        // Generate for a year to be safe
+        for (let i = 0; i < 52; i++) { 
+            const weekStartDate = startOfWeek(addDays(startDate, i * 7), { weekStartsOn: 0 }); // Sunday
+            const weekEndDate = endOfWeek(addDays(startDate, i * 7), { weekStartsOn: 0 }); // Saturday
+            const team = teamOrder[i % teamOrder.length];
+            generated.push({
+                team: team,
+                startDate: format(weekStartDate, 'yyyy-MM-dd'),
+                endDate: format(weekEndDate, 'yyyy-MM-dd'),
+            });
+        }
+        return generated;
+    } catch (error) {
+        console.error("Failed to generate team schedules from localStorage, using initial data.", error);
+        return initialTeamSchedules;
+    }
+  };
+
 
   const handleGenerateClick = async () => {
     if (selectedAreas.length === 0) {
@@ -47,8 +82,7 @@ export default function GenerateSchedulePage() {
     setIsLoading(true);
     setSchedule(null);
     try {
-      const teamScheduleData = localStorage.getItem('teamSchedules');
-      const teamSchedules = teamScheduleData ? JSON.parse(teamScheduleData) : [];
+      const teamSchedules = getTeamSchedules();
 
       const result = await generateSchedule({
         month: parseInt(month),
@@ -95,14 +129,17 @@ export default function GenerateSchedulePage() {
     );
   };
 
-  const groupedAssignments = schedule?.assignments.reduce((acc, assignment) => {
-    const key = assignment.eventUniqueName;
-    if (!acc[key]) {
-      acc[key] = [];
-    }
-    acc[key].push(assignment);
-    return acc;
-  }, {} as Record<string, typeof schedule.assignments>);
+  const groupedAssignments = useMemo(() => {
+    if (!schedule) return null;
+    return schedule.assignments.reduce((acc, assignment) => {
+        const key = assignment.eventUniqueName;
+        if (!acc[key]) {
+            acc[key] = [];
+        }
+        acc[key].push(assignment);
+        return acc;
+    }, {} as Record<string, typeof schedule.assignments>);
+  }, [schedule]);
 
 
   return (
@@ -182,9 +219,9 @@ export default function GenerateSchedulePage() {
             </CardHeader>
             <CardContent className="space-y-6">
                 {Object.entries(groupedAssignments).sort(([keyA], [keyB]) => {
-                    const dateA = keyA.split(' - ')[1];
-                    const dateB = keyB.split(' - ')[1];
-                    return dateA.localeCompare(dateB, undefined, { numeric: true });
+                    const dateA = keyA.split(' - ')[1].split('/').reverse().join('');
+                    const dateB = keyB.split(' - ')[1].split('/').reverse().join('');
+                    return dateA.localeCompare(dateB);
                  }).map(([eventUniqueName, assignments]) => (
                     <div key={eventUniqueName}>
                         <h3 className="font-semibold text-lg mb-2">{eventUniqueName}</h3>

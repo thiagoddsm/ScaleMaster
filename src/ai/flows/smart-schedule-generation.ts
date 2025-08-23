@@ -24,7 +24,7 @@ export type GenerateScheduleInput = z.infer<typeof GenerateScheduleInputSchema>;
 
 const GenerateScheduleOutputSchema = z.object({
   assignments: z.array(z.object({
-    eventUniqueName: z.string().describe("The unique name of the event, in the format \"[Event Name] - [dd/MM]\"."),
+    eventUniqueName: z.string().describe("The unique name of the event, in the format \"[Event Name] - [dd/MM]\". Use two digits for day and month."),
     area: z.string().describe("The area of service for the assignment."),
     position: z.number().describe("The position number for the assignment (e.g., 1, 2, 3)."),
     volunteer: z.string().nullable().describe("The name of the assigned volunteer, or null if no one was assigned."),
@@ -67,8 +67,9 @@ const prompt = ai.definePrompt({
     6.  **Output Format:**
         *   The final output MUST be a valid JSON object matching the provided schema.
         *   For each position required by a filtered event on a specific date, create one assignment object.
-        *   The 'eventUniqueName' must be in the format "Event Name - dd/MM".
+        *   The 'eventUniqueName' must be in the format "Event Name - dd/MM". Use two digits for day and month.
         *   **CRITICAL: Do NOT include any assignments for areas that were not requested in the 'areasToSchedule' input (if provided).**
+        *   Ensure all event occurrences within the month are processed.
 
     **Input Data:**
     - Month: {{{month}}}
