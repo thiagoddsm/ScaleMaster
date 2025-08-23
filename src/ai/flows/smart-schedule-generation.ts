@@ -45,14 +45,12 @@ const prompt = ai.definePrompt({
   input: { schema: GenerateScheduleInputSchema },
   output: { schema: GenerateScheduleOutputSchema },
   prompt: `
-    **PERSONA:** Você é um assistente especialista em logística e alocação de equipes, focado em criar escalas mensais para voluntários em uma igreja. Sua principal função é seguir um processo lógico rigoroso para preencher vagas, garantindo que todas as regras de disponibilidade e responsabilidade de equipe sejam cumpridas.
-
     **CONTEXTO E OBJETIVO:**
-    O objetivo é gerar a escala de serviço completa para um mês específico. A alocação de voluntários depende de três fatores principais: a **Área de Serviço** em que atuam, sua **disponibilidade para eventos específicos** e a **Equipe de rodízio semanal** à qual pertencem. O resultado final deve ser uma escala clara em JSON, que mostre quem está escalado ou, se ninguém puder ser alocado, o motivo exato da falha.
+    O seu objetivo é criar o esqueleto de uma escala de serviço para um mês específico, com base nos eventos que acontecem. Você NÃO deve alocar nenhum voluntário.
 
-    **REGRAS DE NEGÓCIO E PROCESSO DE GERAÇÃO:**
+    **REGRAS E PROCESSO DE GERAÇÃO:**
 
-    Você deve seguir este processo de 5 etapas na ordem exata.
+    Você deve seguir este processo de 3 etapas na ordem exata.
 
     **1. Calcular Datas dos Eventos:**
     - Para o mês e ano fornecidos, determine todas as datas de ocorrência para cada evento.
@@ -60,52 +58,20 @@ const prompt = ai.definePrompt({
     - Para eventos 'Pontual', verifique se a 'date' do evento ocorre no mês/ano solicitados.
 
     **2. Gerar a Lista Mestra de Vagas:**
-    - Para cada ocorrência de evento calculada na Etapa 1, crie uma lista de todas as vagas necessárias.
+    - Para cada ocorrência de evento calculada na Etapa 1, e para cada área de serviço necessária nesse evento, crie uma lista de vagas.
     - Se um evento precisa de 2 voluntários para "Recepção", sua lista mestre de vagas deve conter duas entradas separadas para "Recepção" naquele dia (uma para a Posição 1 e outra para a Posição 2).
+    - Ignore os filtros de 'areasToSchedule' por enquanto. Gere para todas as áreas de todos os eventos.
 
-    **3. Filtrar Vagas por Áreas Solicitadas:**
-    - Verifique se a lista 'areasToSchedule' no input não está vazia.
-    - Se não estiver, filtre a lista mestra de vagas da Etapa 2, mantendo **apenas** as vagas cujas áreas estão presentes em 'areasToSchedule'.
-    - Se 'areasToSchedule' estiver vazia, pule esta etapa e use a lista completa de vagas.
-    - A lista resultante é a sua lista final de vagas a serem preenchidas.
-
-    **4. Processo de Alocação de Voluntários (Para cada Vaga da Etapa 3):**
-    Para **cada vaga** na sua lista final, você deve seguir estritamente os seguintes 4 passos em ordem para encontrar um voluntário:
-
-    *   **Passo 4.1: Filtrar por Área de Serviço:**
-        *   Comece com a lista de **TODOS** os voluntários.
-        *   Filtre essa lista, mantendo apenas os voluntários cuja lista 'areas' contenha a área exigida pela vaga (ex: "Som").
-
-    *   **Passo 4.2: Filtrar por Disponibilidade de Evento:**
-        *   Pegue a lista resultante do Passo 4.1.
-        *   Filtre novamente, mantendo apenas os voluntários cuja lista 'availability' contenha o nome do evento em questão (ex: "Culto da família").
-
-    *   **Passo 4.3: Filtrar pela Equipe da Semana:**
-        *   Pegue a lista resultante do Passo 4.2.
-        *   Usando a data da vaga e o 'teamSchedules', identifique qual equipe é a responsável.
-        *   Filtre a lista, mantendo apenas os voluntários que pertencem a essa equipe.
-
-    *   **Passo 4.4: Alocação ou Diagnóstico de Falha:**
-        *   **SE** a lista resultante do Passo 4.3 contiver voluntários, aloque um que ainda não tenha sido escalado no mesmo dia. Se mais de um estiver disponível, escolha um para rotacionar. No objeto de saída, defina o nome no campo 'volunteer' e deixe 'reason' como nulo.
-        *   **SE** a lista resultante do Passo 4.3 estiver **vazia**, a vaga não pode ser preenchida. No objeto de saída, defina 'volunteer' como nulo e defina 'reason' com **exatamente uma** das seguintes mensagens, verificada na ordem inversa do processo:
-            *   Se a lista do Passo 4.2 já estava vazia: **"Voluntário da área não disponível para este evento."**
-            *   Se a lista do Passo 4.1 já estava vazia: **"Nenhum voluntário cadastrado nesta área."**
-            *   Se as listas dos Passos 4.1 e 4.2 tinham pessoas, mas a do Passo 4.3 ficou vazia: **"Voluntários disponíveis não são da equipe da semana."**
-            *   Se voluntários da equipe estavam disponíveis mas já foram alocados em outra função no mesmo dia: **"Voluntário já alocado hoje."**
-
-    **5. Formato de Saída (Output):**
+    **3. Formato de Saída (Output):**
     - O resultado final deve ser um objeto JSON que corresponda perfeitamente ao schema de saída fornecido.
-    - Cada vaga da Etapa 3 deve resultar em exatamente um objeto no array 'assignments'.
+    - Cada vaga da Etapa 2 deve resultar em exatamente um objeto no array 'assignments'.
     - O campo 'eventUniqueName' deve ser no formato "Nome do Evento - dd/MM". Use dois dígitos para dia e mês.
+    - **IMPORTANTE:** Os campos 'volunteer' e 'reason' devem ser **sempre** nulos para esta etapa. Apenas gere a estrutura de vagas.
 
     **Input Data:**
     - Month: {{{month}}}
     - Year: {{{year}}}
-    - Volunteers: {{{json volunteers}}}
     - Events: {{{json events}}}
-    - Teams: {{{json teams}}}
-    - Team Rotation Schedule: {{{json teamSchedules}}}
-    - Areas to Schedule: {{{json areasToSchedule}}}
   `,
 });
 
