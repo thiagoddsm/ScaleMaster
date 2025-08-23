@@ -1,15 +1,17 @@
 
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import { volunteers, events, teamSchedules } from '@/lib/data';
 import { generateSchedule, GenerateScheduleOutput } from '@/ai/flows/smart-schedule-generation';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 
 
 export default function SchedulePage() {
@@ -45,17 +47,6 @@ export default function SchedulePage() {
       setIsLoading(false);
     }
   };
-  
-  const parsedTable = useMemo(() => {
-    if (!result?.scaleTable) {
-      return { header: [], rows: [] };
-    }
-    const lines = result.scaleTable.trim().split('\n');
-    const header = lines[0].split('|').map(h => h.trim()).filter(Boolean);
-    const rows = lines.slice(2).map(line => line.split('|').map(cell => cell.trim()).filter(Boolean));
-    return { header, rows };
-  }, [result]);
-
 
   return (
     <div className="space-y-8">
@@ -122,17 +113,38 @@ export default function SchedulePage() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    {parsedTable.header.map((header, index) => <TableHead key={index}>{header}</TableHead>)}
+                                    <TableHead>Data</TableHead>
+                                    <TableHead>Dia da Semana</TableHead>
+                                    <TableHead>Evento</TableHead>
+                                    <TableHead>Área</TableHead>
+                                    <TableHead>Equipe</TableHead>
+                                    <TableHead>Voluntário</TableHead>
+                                    <TableHead>Status</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {parsedTable.rows.length > 0 ? parsedTable.rows.map((row, rowIndex) => (
-                                    <TableRow key={rowIndex}>
-                                        {row.map((cell, cellIndex) => <TableCell key={cellIndex}>{cell}</TableCell>)}
+                               {result.scheduleData.flatMap(day => 
+                                  day.assignments.map((assignment, index) => (
+                                    <TableRow key={`${day.date}-${assignment.evento}-${assignment.area}-${index}`}>
+                                      <TableCell>{new Date(day.date + 'T00:00:00').toLocaleDateString('pt-BR')}</TableCell>
+                                      <TableCell>{day.dayOfWeek}</TableCell>
+                                      <TableCell>{assignment.evento}</TableCell>
+                                      <TableCell>{assignment.area}</TableCell>
+                                      <TableCell>
+                                        {assignment.equipe && <Badge variant="secondary">{assignment.equipe}</Badge>}
+                                      </TableCell>
+                                      <TableCell>{assignment.voluntario_alocado || <span className="text-muted-foreground italic">{assignment.motivo || '-'}</span>}</TableCell>
+                                      <TableCell>
+                                         <Badge variant={assignment.status === 'Preenchida' ? 'default' : 'destructive'}>
+                                          {assignment.status}
+                                         </Badge>
+                                      </TableCell>
                                     </TableRow>
-                                )) : (
+                                  ))
+                                )}
+                                {result.scheduleData.length === 0 && (
                                      <TableRow>
-                                        <TableCell colSpan={parsedTable.header.length} className="h-24 text-center">
+                                        <TableCell colSpan={7} className="h-24 text-center">
                                             Nenhum dado para exibir.
                                         </TableCell>
                                     </TableRow>
@@ -143,40 +155,42 @@ export default function SchedulePage() {
                 </CardContent>
             </Card>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Relatório Complementar</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4 text-sm">
-                    <div>
-                        <h3 className="font-semibold">Taxa de Preenchimento</h3>
-                        <p className="text-muted-foreground">{result.report.fillRate}</p>
-                    </div>
-                     <div>
-                        <h3 className="font-semibold">Distribuição por Voluntário</h3>
-                        <p className="text-muted-foreground whitespace-pre-wrap">{result.report.volunteerDistribution}</p>
-                    </div>
-                     <div>
-                        <h3 className="font-semibold">Análise de Gargalos</h3>
-                        <p className="text-muted-foreground whitespace-pre-wrap">{result.report.bottlenecks}</p>
-                    </div>
-                     <div>
-                        <h3 className="font-semibold">Recomendações</h3>
-                        <p className="text-muted-foreground">{result.report.recommendations}</p>
-                    </div>
-                </CardContent>
-            </Card>
+            <div className="grid md:grid-cols-2 gap-8">
+              <Card>
+                  <CardHeader>
+                      <CardTitle>Relatório Complementar</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4 text-sm">
+                      <div>
+                          <h3 className="font-semibold">Taxa de Preenchimento</h3>
+                          <p className="text-muted-foreground">{result.report.fillRate}</p>
+                      </div>
+                      <div>
+                          <h3 className="font-semibold">Distribuição por Voluntário</h3>
+                          <ReactMarkdown className="prose prose-sm dark:prose-invert text-muted-foreground whitespace-pre-wrap">{result.report.volunteerDistribution}</ReactMarkdown>
+                      </div>
+                      <div>
+                          <h3 className="font-semibold">Análise de Gargalos</h3>
+                           <ReactMarkdown className="prose prose-sm dark:prose-invert text-muted-foreground whitespace-pre-wrap">{result.report.bottlenecks}</ReactMarkdown>
+                      </div>
+                      <div>
+                          <h3 className="font-semibold">Recomendações</h3>
+                          <p className="text-muted-foreground">{result.report.recommendations}</p>
+                      </div>
+                  </CardContent>
+              </Card>
 
-            <Card>
-                 <CardHeader>
-                    <CardTitle>Saída de Dados (JSON)</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <pre className="bg-muted p-4 rounded-md overflow-x-auto text-xs">
-                        {JSON.stringify(result.scheduleData, null, 2)}
-                    </pre>
-                </CardContent>
-            </Card>
+              <Card>
+                  <CardHeader>
+                      <CardTitle>Saída de Dados (JSON)</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                      <pre className="bg-muted p-4 rounded-md overflow-x-auto text-xs max-h-[400px]">
+                          {JSON.stringify(result.scheduleData, null, 2)}
+                      </pre>
+                  </CardContent>
+              </Card>
+            </div>
         </div>
       )}
     </div>

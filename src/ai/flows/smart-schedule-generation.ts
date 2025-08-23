@@ -23,6 +23,7 @@ export type GenerateScheduleInput = z.infer<typeof GenerateScheduleInputSchema>;
 const ScheduleItemSchema = z.object({
     evento: z.string(),
     area: z.string(),
+    equipe: z.string().nullable().describe("The team assigned to the shift for this event."),
     voluntario_alocado: z.string().nullable(),
     status: z.enum(["Preenchida", "Falha"]),
     motivo: z.string().nullable(),
@@ -30,6 +31,7 @@ const ScheduleItemSchema = z.object({
 
 const ScheduleDaySchema = z.object({
   date: z.string().describe("The date of the assignments in YYYY-MM-DD format."),
+  dayOfWeek: z.string().describe("The day of the week for the given date."),
   assignments: z.array(ScheduleItemSchema).describe("A list of assignments for this date."),
 });
 
@@ -67,24 +69,30 @@ OBJETIVO: Gerar a escala de serviço completa para o mês de {{month}}/{{year}},
 2.1. ESTRUTURAS DE DADOS ESSENCIAIS
 As seguintes estruturas de dados JSON são a única fonte da verdade para esta tarefa.
 
-Voluntario:
+Voluntarios:
 \`\`\`json
 {{{json volunteers}}}
 \`\`\`
 
-Evento:
+Eventos:
 \`\`\`json
 {{{json events}}}
 \`\`\`
 
+Equipes e Rotação:
+\`\`\`json
+{{{json teamSchedules}}}
+\`\`\`
+
+
 2.2. REGRAS DE NEGÓCIO E OTIMIZAÇÃO
-Regra de Unicidade: Um voluntário não pode ser alocado para mais de uma vaga no mesmo evento.
+Regra de Unicidade: Um voluntário não pode ser alocado para mais de uma vaga no mesmo evento e na mesma data.
 
 Regra de Competência: Um voluntário só pode ser alocado na Area_de_Servico em que está cadastrado.
 
 Regra de Disponibilidade: A lista Eventos_Disponiveis de um voluntário deve ser estritamente respeitada.
 
-Regra de Rotação: A escala de equipes por semana (Alpha -> Bravo -> Charlie -> Delta) é obrigatória.
+Regra de Rotação: A escala de equipes por semana é obrigatória e segue o cronograma fornecido.
 
 Regra da 5ª Semana: Se um mês tiver uma quinta semana que precise de cobertura, a responsabilidade retorna para a Equipe Alpha.
 
@@ -92,20 +100,20 @@ Regra de Otimização (Justiça): Ao escolher entre candidatos qualificados, sem
 
 Critério de Desempate: Em caso de empate na Contagem_Servicos_Mes, desempate escolhendo o voluntário com o ID_Voluntario de menor valor em ordem alfanumérica.
 
-2.3. ALGORITMO DE ALOCAÇÃO SEQUENCIAL
+# 3. ALGORITMO DE ALOCAÇÃO SEQUENCIAL
 Execute as seguintes fases e passos na ordem exata apresentada.
 
 Fase 1: Configuração e Preparação
 Definir Período: Identifique o mês e ano da escala (Mês: {{month}}, Ano: {{year}}).
 
-Expandir Eventos: Para todos os eventos do tipo "Fixo Semanal", crie uma ocorrência para cada data correspondente dentro do mês.
+Expandir Eventos: Para todos os eventos do tipo "Fixo Semanal", crie uma ocorrência para cada data correspondente dentro do mês. Eventos pontuais ocorrem apenas na sua data específica.
 
-Mapear Equipes: Crie um mapa Data -> ID_Equipe para cada dia do mês, seguindo a rotação semanal. A troca de equipe ocorre sempre no Domingo. Você receberá os dados de rotação em \`teamSchedules\`.
+Mapear Equipes: Crie um mapa Data -> ID_Equipe para cada dia do mês, seguindo a rotação semanal fornecida nos dados de entrada. A equipe responsável pelo dia é aquela cujo período em \`teamSchedules\` inclui a data.
 
 Validação Pré-Alocação: Para cada Area em cada Demanda de todos os eventos, verifique se existe pelo menos um Voluntario cuja Area_de_Servico corresponda. Se uma área demandada não existir no cadastro, marque todas as vagas para essa área com o erro: "FALHA: Área de Serviço ('[Nome da Área]') não encontrada no cadastro de voluntários." e não prossiga com a alocação para essa vaga específica.
 
 Fase 2: Processo de Geração da Escala
-Processe cada evento em ordem cronológica. Para cada evento, processe cada Demanda. Para cada Demanda, itere de 1 até a Quantidade para preencher cada vaga individualmente. Para cada vaga, aplique o seguinte funil de filtragem:
+Processe cada evento em ordem cronológica por data. Para cada evento, processe cada Demanda. Para cada Demanda, itere de 1 até a Quantidade para preencher cada vaga individualmente. Para cada vaga, aplique o seguinte funil de filtragem:
 
 Passo 2.1: Filtro por Competência (Área de Serviço)
 Crie uma lista de candidatos a partir de todos os voluntários.
@@ -128,7 +136,7 @@ SE A LISTA ESTIVER VAZIA: A vaga falhou. Determine o motivo verificando os filtr
 - Se a lista ficou vazia no Passo 2.1: "MOTIVO: Nenhum voluntário cadastrado nesta área de serviço."
 
 SE A LISTA CONTIVER CANDIDATOS:
-- Aplique a Regra de Unicidade: Remova candidatos já alocados em outra vaga deste mesmo evento.
+- Aplique a Regra de Unicidade: Remova candidatos já alocados em outra vaga deste mesmo evento (mesmo Nome_Evento e mesma data).
 - Aplique a Otimização e Desempate: Ordene os candidatos restantes por Contagem_Servicos_Mes (crescente) e, em seguida, por ID_Voluntario (alfanumérico).
 - Alocação: Escale o primeiro voluntário da lista ordenada.
 - Atualização: Incremente em +1 a Contagem_Servicos_Mes do voluntário alocado.
@@ -137,14 +145,14 @@ SE A LISTA CONTIVER CANDIDATOS:
 A sua resposta final deve conter as três seções a seguir, sem nenhum texto introdutório ou conclusivo adicional.
 
 4.1. Tabela de Escala (Markdown)
-| Data | Dia da Semana | Evento | Área de Serviço | Voluntário Escalado / Motivo da Falha |
-| :--- | :--- | :--- | :--- | :--- |
+| Data | Dia da Semana | Evento | Área de Serviço | Equipe | Voluntário Escalado / Motivo da Falha |
+| :--- | :--- | :--- | :--- | :--- | :--- |
 
 4.2. Relatório Complementar
 - Taxa de Preenchimento: [Calcular]% de vagas preenchidas ([Número de Vagas Preenchidas] de [Total de Vagas]).
 - Distribuição por Voluntário: Liste cada voluntário e o número total de vezes que foi escalado.
 - Análise de Gargalos: Identifique as 3 combinações de Evento e Area com o maior número de falhas de alocação.
-- Recomendações: Com base nos gargalos, forneça uma sugestão curta para melhorar futuras escalas (ex: "Recomenda-se recrutar mais voluntários para a área de 'Projeção' disponíveis para o 'Culto da Tarde'").
+- Recomendações: Com base nos gargalos, forneça uma sugestão curta para melhorar futuras escalas (ex: "Recomenda-se recrutar mais voluntários para a área de 'Som' disponíveis para o 'Culto da Família'").
 
 4.3. Saída de Dados (JSON)
 Gere um array de objetos JSON, onde cada objeto representa um dia com eventos.
@@ -152,10 +160,12 @@ Gere um array de objetos JSON, onde cada objeto representa um dia com eventos.
 [
   {
     "date": "AAAA-MM-DD",
+    "dayOfWeek": "Nome do Dia da Semana",
     "assignments": [
       {
         "evento": "Nome do Evento",
         "area": "Nome da Area",
+        "equipe": "Nome da Equipe",
         "voluntario_alocado": "Nome do Voluntário",
         "status": "Preenchida",
         "motivo": null
@@ -163,6 +173,7 @@ Gere um array de objetos JSON, onde cada objeto representa um dia com eventos.
       {
         "evento": "Nome do Evento",
         "area": "Nome da Area",
+        "equipe": "Nome da Equipe",
         "voluntario_alocado": null,
         "status": "Falha",
         "motivo": "Motivo da falha..."
