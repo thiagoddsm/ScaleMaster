@@ -3,8 +3,12 @@ import type { Volunteer, Event, Team, TeamSchedule, AreaOfService, UserPermissio
 export const adminUserEmail = "thiagoddsm@gmail.com";
 
 export const areasOfService: AreaOfService[] = [
-    { name: "Som" },
+    { name: "Apoio" },
+    { name: "Cantina" },
+    { name: "Kids" },
     { name: "Projeção" },
+    { name: "Recepção" },
+    { name: "Som" },
 ].sort((a, b) => a.name.localeCompare(b.name));
 
 export const teams: Team[] = [
