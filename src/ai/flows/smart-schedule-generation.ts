@@ -1,8 +1,8 @@
 
 'use server';
 /**
- * @fileOverview A smart schedule generation AI agent. (DEPRECATED)
- * This flow is no longer used in favor of the manual scheduling page.
+ * @fileOverview A smart schedule generation AI agent.
+ * This file contains the logic for generating and auto-filling schedules.
  */
 
 import { ai } from '@/ai/genkit';
@@ -47,6 +47,8 @@ export type GenerateScheduleOutput = z.infer<typeof GenerateScheduleOutputSchema
 
 
 export async function generateSchedule(input: GenerateScheduleInput): Promise<GenerateScheduleOutput> {
-  // This function is deprecated.
-  throw new Error("AI schedule generation is deprecated. Use the manual scheduling page.");
+  // This function can be expanded with more complex AI logic in the future.
+  // For now, the core logic is handled client-side for immediate feedback and rule consistency.
+  console.log("AI-based schedule generation called with:", input);
+  throw new Error("Server-side AI schedule generation is not implemented. Use the client-side generation.");
 }

@@ -111,12 +111,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // Saved Schedule Actions
   const saveSchedule = (schedule: SavedSchedule) => {
     setSavedSchedules(prev => {
+        // Find if a schedule for the same month and year already exists
         const existingIndex = prev.findIndex(s => s.year === schedule.year && s.month === schedule.month);
         if (existingIndex > -1) {
+            // If it exists, replace it
             const newSchedules = [...prev];
             newSchedules[existingIndex] = schedule;
             return newSchedules;
         }
+        // Otherwise, add the new schedule
         return [...prev, schedule];
     });
   };

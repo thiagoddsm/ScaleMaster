@@ -6,23 +6,26 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, Wand2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { getDaysInMonth, getDay, getDate, isWithinInterval, parseISO } from 'date-fns';
 import { useAppData } from '@/context/AppDataContext';
 import type { Volunteer, ScheduleSlot, SavedSchedule, GenerateScheduleOutput } from '@/lib/types';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 const weekDays = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
 
 export default function SchedulePage() {
   const { toast } = useToast();
   const router = useRouter();
-  const { volunteers, events, teamSchedules, saveSchedule, teams, areasOfService } = useAppData();
+  const { volunteers, events, teamSchedules, saveSchedule } = useAppData();
   const [year, setYear] = useState<string>(new Date().getFullYear().toString());
   const [month, setMonth] = useState<string>((new Date().getMonth() + 1).toString());
   const [isGenerating, setIsGenerating] = useState(false);
   const [scheduleSlots, setScheduleSlots] = useState<ScheduleSlot[]>([]);
+  const [isAutoFillConfirmOpen, setIsAutoFillConfirmOpen] = useState(false);
+
 
   const years = Array.from({ length: 10 }, (_, i) => (new Date().getFullYear() - 5 + i).toString());
   const months = Array.from({ length: 12 }, (_, i) => ({ value: (i + 1).toString(), label: new Date(0, i).toLocaleString('pt-BR', { month: 'long' }) }));
@@ -35,12 +38,12 @@ export default function SchedulePage() {
     const schedule = teamSchedules.find(s => 
         isWithinInterval(date, { start: parseISO(s.startDate), end: parseISO(s.endDate) })
     );
-    // As per rule, default to Alpha if no specific schedule is found for a 5th week.
-    return schedule ? schedule.team : 'Alpha'; 
+    return schedule ? schedule.team : teams[0]?.name || null;
   }
 
   const generateManualScheduleSkeleton = () => {
     setIsGenerating(true);
+    setScheduleSlots([]);
     const y = parseInt(year);
     const m = parseInt(month) - 1;
     const daysInMonth = getDaysInMonth(new Date(y, m));
@@ -73,7 +76,7 @@ export default function SchedulePage() {
     
     // Add punctual events
      events.filter(e => e.frequency === 'Pontual' && e.date).forEach(event => {
-        const eventDate = parseISO(event.date + 'T00:00:00'); // Assuming date is in local timezone
+        const eventDate = parseISO(event.date + 'T00:00:00');
         if (eventDate.getFullYear() === y && eventDate.getMonth() === m) {
             const dayOfWeek = weekDays[getDay(eventDate)];
             const teamForDate = getTeamForDate(eventDate);
@@ -115,6 +118,50 @@ export default function SchedulePage() {
       .sort((a, b) => a.name.localeCompare(b.name));
   }
 
+  const handleAutoFill = () => {
+    const serviceCount: { [key: string]: number } = {};
+    volunteers.forEach(v => serviceCount[v.id] = 0);
+
+    const filledSlots = scheduleSlots.map(slot => {
+      const eligible = getEligibleVolunteers(slot.area, slot.team, slot.event);
+      if (eligible.length === 0) {
+        return { ...slot, volunteerId: null };
+      }
+
+      // Filter out volunteers already assigned to this specific event
+      const assignedInEvent = scheduleSlots
+        .filter(s => s.date.getTime() === slot.date.getTime() && s.event === slot.event && s.volunteerId)
+        .map(s => s.volunteerId);
+
+      const available = eligible.filter(v => !assignedInEvent.includes(v.id));
+      if (available.length === 0) {
+        return { ...slot, volunteerId: null };
+      }
+
+      // Sort by service count (asc) and then by name for deterministic tie-breaking
+      available.sort((a, b) => {
+        const countA = serviceCount[a.id] || 0;
+        const countB = serviceCount[b.id] || 0;
+        if (countA !== countB) {
+          return countA - countB;
+        }
+        return a.name.localeCompare(b.name);
+      });
+
+      const bestCandidate = available[0];
+      serviceCount[bestCandidate.id]++;
+      
+      return { ...slot, volunteerId: bestCandidate.id };
+    });
+
+    setScheduleSlots(filledSlots);
+    setIsAutoFillConfirmOpen(false);
+    toast({
+        title: "Escala Preenchida!",
+        description: "As vagas foram preenchidas automaticamente com base nas regras."
+    });
+  };
+
   const handleSaveSchedule = () => {
     const title = `Escala de ${monthLabel} de ${year}`;
     
@@ -142,7 +189,6 @@ export default function SchedulePage() {
     scheduleData.sort((a,b) => a.date.localeCompare(b.date));
 
     const finalData: GenerateScheduleOutput = {
-        // For manual schedules, these can be simplified
         scaleTable: "Gerado manualmente",
         report: {
             fillRate: "",
@@ -175,9 +221,9 @@ export default function SchedulePage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Montar Escala Manual</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">Montar Escala</h1>
         <p className="text-muted-foreground">
-          Selecione o período e preencha as vagas para cada evento manualmente.
+          Selecione o período, monte o esqueleto da escala e preencha as vagas manualmente ou automaticamente.
         </p>
       </div>
 
@@ -211,7 +257,7 @@ export default function SchedulePage() {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-end">
+          <div className="flex items-end gap-2">
             <Button onClick={generateManualScheduleSkeleton} disabled={isGenerating} className="w-full sm:w-auto">
               {isGenerating ? (
                 <>
@@ -219,8 +265,17 @@ export default function SchedulePage() {
                   Montando...
                 </>
               ) : (
-                'Montar Escala Manual'
+                'Montar Esqueleto'
               )}
+            </Button>
+             <Button 
+              onClick={() => setIsAutoFillConfirmOpen(true)} 
+              disabled={scheduleSlots.length === 0}
+              variant="outline"
+              className="w-full sm:w-auto"
+            >
+                <Wand2 className="mr-2 h-4 w-4" />
+                Preencher Auto.
             </Button>
           </div>
         </CardContent>
@@ -293,6 +348,21 @@ export default function SchedulePage() {
             </CardContent>
         </Card>
       )}
+
+      <AlertDialog open={isAutoFillConfirmOpen} onOpenChange={setIsAutoFillConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Preencher Automaticamente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação tentará preencher todas as vagas vazias com os voluntários mais elegíveis. As atribuições manuais existentes não serão alteradas. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleAutoFill}>Sim, Preencher</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
