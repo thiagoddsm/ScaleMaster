@@ -2,27 +2,34 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Info, Save } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
+import { Loader2, Save } from 'lucide-react';
 import { volunteers, events, teamSchedules, savedSchedules } from '@/lib/data';
-import { generateSchedule, GenerateScheduleOutput } from '@/ai/flows/smart-schedule-generation';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
+import type { Event, Volunteer } from '@/lib/types';
+import { getDaysInMonth, getDay, setDate, getDate } from 'date-fns';
 
+type ScheduleSlot = {
+  date: Date;
+  dayOfWeek: string;
+  event: string;
+  area: string;
+  volunteerId: string | null;
+  slotKey: string;
+};
+
+const weekDays = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
 
 export default function SchedulePage() {
   const { toast } = useToast();
   const [year, setYear] = useState<string>(new Date().getFullYear().toString());
   const [month, setMonth] = useState<string>((new Date().getMonth() + 1).toString());
-  const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<GenerateScheduleOutput | null>(null);
-  const [isSaved, setIsSaved] = useState(false);
-
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [scheduleSlots, setScheduleSlots] = useState<ScheduleSlot[]>([]);
 
   const years = Array.from({ length: 10 }, (_, i) => (new Date().getFullYear() - 5 + i).toString());
   const months = Array.from({ length: 12 }, (_, i) => ({ value: (i + 1).toString(), label: new Date(0, i).toLocaleString('pt-BR', { month: 'long' }) }));
@@ -31,65 +38,96 @@ export default function SchedulePage() {
     return months.find(m => m.value === month)?.label || '';
   }, [month, months]);
 
-  const handleGenerateClick = async () => {
-    setIsLoading(true);
-    setResult(null);
-    setIsSaved(false);
-    try {
-      const response = await generateSchedule({
-        year: parseInt(year),
-        month: parseInt(month),
-        volunteers,
-        events,
-        teamSchedules
-      });
-      setResult(response);
-    } catch (error) {
-      console.error("Error generating schedule:", error);
-      toast({
-        variant: 'destructive',
-        title: 'Erro ao Gerar Escala',
-        description: 'Ocorreu um erro inesperado. Verifique o console para mais detalhes.',
-      });
-    } finally {
-      setIsLoading(false);
+  const generateManualScheduleSkeleton = () => {
+    setIsGenerating(true);
+    const y = parseInt(year);
+    const m = parseInt(month) - 1;
+    const daysInMonth = getDaysInMonth(new Date(y, m));
+    const slots: ScheduleSlot[] = [];
+
+    // Expand weekly events
+    for (let day = 1; day <= daysInMonth; day++) {
+        const currentDate = new Date(y, m, day);
+        const dayOfWeek = weekDays[getDay(currentDate)];
+
+        events.filter(e => e.frequency === 'Semanal' && e.dayOfWeek === dayOfWeek)
+            .forEach(event => {
+                event.areas.forEach(area => {
+                    for (let i = 0; i < area.volunteersNeeded; i++) {
+                        slots.push({
+                            date: currentDate,
+                            dayOfWeek: dayOfWeek,
+                            event: event.name,
+                            area: area.name,
+                            volunteerId: null,
+                            slotKey: `${event.id}-${area.name}-${day}-${i}`
+                        });
+                    }
+                });
+            });
     }
+    
+    // Add punctual events
+     events.filter(e => e.frequency === 'Pontual' && e.date).forEach(event => {
+        const eventDate = new Date(event.date + 'T12:00:00Z');
+        if (eventDate.getFullYear() === y && eventDate.getMonth() === m) {
+            const dayOfWeek = weekDays[getDay(eventDate)];
+             event.areas.forEach(area => {
+                for (let i = 0; i < area.volunteersNeeded; i++) {
+                     slots.push({
+                        date: eventDate,
+                        dayOfWeek: dayOfWeek,
+                        event: event.name,
+                        area: area.name,
+                        volunteerId: null,
+                        slotKey: `${event.id}-${area.name}-${getDate(eventDate)}-${i}`
+                    });
+                }
+            });
+        }
+    });
+
+    slots.sort((a,b) => a.date.getTime() - b.date.getTime());
+    setScheduleSlots(slots);
+    setIsGenerating(false);
   };
+  
+  const handleVolunteerChange = (slotKey: string, volunteerId: string) => {
+    setScheduleSlots(prev => 
+      prev.map(slot => slot.slotKey === slotKey ? { ...slot, volunteerId } : slot)
+    );
+  };
+  
+  const volunteersByArea = (areaName: string) => {
+    return volunteers
+      .filter(v => v.areas.includes(areaName))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
 
   const handleSaveSchedule = () => {
-    if (!result) return;
-
-    const newSavedSchedule = {
-      id: `escala-${year}-${month}-${Date.now()}`,
-      title: `Escala para ${monthLabel} de ${year}`,
-      createdAt: new Date().toISOString(),
-      year: parseInt(year),
-      month: parseInt(month),
-      data: result,
-    };
-
-    savedSchedules.push(newSavedSchedule);
-    setIsSaved(true);
+    // This is where you would implement the logic to save the manually created schedule.
+    // For now, it will just show a toast.
+    console.log("Saving schedule:", scheduleSlots);
     toast({
-      title: 'Escala Salva!',
-      description: `A escala para ${monthLabel} de ${year} foi salva com sucesso.`,
+      title: 'Funcionalidade em Desenvolvimento',
+      description: 'A lógica para salvar a escala manual ainda não foi implementada.',
     });
   };
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Gerar Escala</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">Montar Escala Manual</h1>
         <p className="text-muted-foreground">
-          Selecione o mês e o ano para gerar uma nova escala de voluntários.
+          Selecione o período e preencha as vagas para cada evento manualmente.
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Parâmetros de Geração</CardTitle>
+          <CardTitle>Período da Escala</CardTitle>
           <CardDescription>
-            Escolha o período para o qual a escala será gerada.
+            Escolha o mês e ano para montar a escala.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col sm:flex-row gap-4">
@@ -116,123 +154,77 @@ export default function SchedulePage() {
             </Select>
           </div>
           <div className="flex items-end">
-            <Button onClick={handleGenerateClick} disabled={isLoading} className="w-full sm:w-auto">
-              {isLoading ? (
+            <Button onClick={generateManualScheduleSkeleton} disabled={isGenerating} className="w-full sm:w-auto">
+              {isGenerating ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Gerando...
+                  Montando...
                 </>
               ) : (
-                'Gerar Escala'
+                'Montar Escala Manual'
               )}
             </Button>
           </div>
         </CardContent>
       </Card>
       
-      {result && (
-        <div className="space-y-8">
-            <Card>
-                <CardHeader className="flex-row items-center justify-between">
-                    <CardTitle>Tabela de Escala</CardTitle>
-                    <Button onClick={handleSaveSchedule} disabled={isSaved}>
-                        <Save className="mr-2 h-4 w-4" />
-                        {isSaved ? 'Salva' : 'Salvar Escala'}
-                    </Button>
-                </CardHeader>
-                <CardContent>
-                    <div className="border rounded-md">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Data</TableHead>
-                                    <TableHead>Dia da Semana</TableHead>
-                                    <TableHead>Evento</TableHead>
-                                    <TableHead>Área</TableHead>
-                                    <TableHead>Equipe</TableHead>
-                                    <TableHead>Voluntário</TableHead>
-                                    <TableHead>Status</TableHead>
+      {scheduleSlots.length > 0 && (
+        <Card>
+            <CardHeader className="flex-row items-center justify-between">
+                <div>
+                    <CardTitle>Escala para {monthLabel} de {year}</CardTitle>
+                    <CardDescription>Atribua um voluntário para cada vaga necessária.</CardDescription>
+                </div>
+                <Button onClick={handleSaveSchedule}>
+                    <Save className="mr-2 h-4 w-4" />
+                    Salvar Escala
+                </Button>
+            </CardHeader>
+            <CardContent>
+                <div className="border rounded-md">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Data</TableHead>
+                                <TableHead>Evento</TableHead>
+                                <TableHead>Área</TableHead>
+                                <TableHead className="w-[250px]">Voluntário</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                           {scheduleSlots.map((slot) => (
+                                <TableRow key={slot.slotKey}>
+                                    <TableCell>
+                                        <div className="font-medium">{slot.date.toLocaleDateString('pt-BR')}</div>
+                                        <div className="text-sm text-muted-foreground">{slot.dayOfWeek}</div>
+                                    </TableCell>
+                                    <TableCell>{slot.event}</TableCell>
+                                    <TableCell>
+                                        <Badge variant="outline">{slot.area}</Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Select
+                                            value={slot.volunteerId ?? ''}
+                                            onValueChange={(volunteerId) => handleVolunteerChange(slot.slotKey, volunteerId)}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Selecione um voluntário" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="EMPTY" disabled>Selecione um voluntário</SelectItem>
+                                                {volunteersByArea(slot.area).map(v => (
+                                                    <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </TableCell>
                                 </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                               {result.scheduleData.flatMap(day => 
-                                  day.assignments.map((assignment, index) => (
-                                    <TableRow key={`${day.date}-${assignment.evento}-${assignment.area}-${index}`}>
-                                      <TableCell>{new Date(day.date + 'T00:00:00').toLocaleDateString('pt-BR')}</TableCell>
-                                      <TableCell>{day.dayOfWeek}</TableCell>
-                                      <TableCell>{assignment.evento}</TableCell>
-                                      <TableCell>{assignment.area}</TableCell>
-                                      <TableCell>
-                                        {assignment.equipe && <Badge variant="secondary">{assignment.equipe}</Badge>}
-                                      </TableCell>
-                                      <TableCell>{assignment.voluntario_alocado || <span className="text-muted-foreground italic">{assignment.motivo || '-'}</span>}</TableCell>
-                                      <TableCell>
-                                         <Badge variant={assignment.status === 'Preenchida' ? 'default' : 'destructive'}>
-                                          {assignment.status}
-                                         </Badge>
-                                      </TableCell>
-                                    </TableRow>
-                                  ))
-                                )}
-                                {result.scheduleData.length === 0 && (
-                                     <TableRow>
-                                        <TableCell colSpan={7} className="h-24 text-center">
-                                            Nenhum dado para exibir.
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    </div>
-                </CardContent>
-            </Card>
-
-            <div className="grid md:grid-cols-1 gap-8">
-              <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
-                      <div>
-                          <CardTitle>Relatório Complementar</CardTitle>
-                          <CardDescription>Análise e métricas da escala gerada pela IA.</CardDescription>
-                      </div>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                            <Button variant="outline" size="icon">
-                                <Info className="h-4 w-4" />
-                                <span className="sr-only">Ver JSON</span>
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-2xl">
-                           <DialogHeader>
-                               <DialogTitle>Saída de Dados (JSON)</DialogTitle>
-                               <DialogDescription>Abaixo está o resultado JSON bruto retornado pela IA.</DialogDescription>
-                           </DialogHeader>
-                            <pre className="bg-muted p-4 rounded-md overflow-x-auto text-xs max-h-[60vh]">
-                                {JSON.stringify(result.scheduleData, null, 2)}
-                            </pre>
-                        </DialogContent>
-                      </Dialog>
-                  </CardHeader>
-                  <CardContent className="space-y-6 text-sm">
-                      <div>
-                          <h3 className="font-semibold text-base mb-2">Taxa de Preenchimento</h3>
-                          <p className="text-muted-foreground">{result.report.fillRate}</p>
-                      </div>
-                      <div>
-                          <h3 className="font-semibold text-base mb-2">Distribuição por Voluntário</h3>
-                          <ReactMarkdown className="prose prose-sm dark:prose-invert text-muted-foreground whitespace-pre-wrap">{result.report.volunteerDistribution}</ReactMarkdown>
-                      </div>
-                      <div>
-                          <h3 className="font-semibold text-base mb-2">Análise de Gargalos</h3>
-                           <ReactMarkdown className="prose prose-sm dark:prose-invert text-muted-foreground whitespace-pre-wrap">{result.report.bottlenecks}</ReactMarkdown>
-                      </div>
-                      <div>
-                          <h3 className="font-semibold text-base mb-2">Recomendações</h3>
-                          <p className="text-muted-foreground">{result.report.recommendations}</p>
-                      </div>
-                  </CardContent>
-              </Card>
-            </div>
-        </div>
+                           ))}
+                        </TableBody>
+                    </Table>
+                </div>
+            </CardContent>
+        </Card>
       )}
     </div>
   );
