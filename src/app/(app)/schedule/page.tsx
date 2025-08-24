@@ -110,9 +110,13 @@ export default function SchedulePage() {
     );
   };
   
-  const volunteersByAreaAndTeam = (areaName: string, teamName: string | null) => {
+  const getEligibleVolunteers = (areaName: string, teamName: string | null, eventName: string) => {
     return volunteers
-      .filter(v => v.areas.includes(areaName) && (v.team === teamName || v.team === 'N/A'))
+      .filter(v => 
+        v.areas.includes(areaName) &&
+        (v.team === teamName || v.team === 'N/A') &&
+        v.availability.includes(eventName)
+      )
       .sort((a, b) => a.name.localeCompare(b.name));
   }
 
@@ -227,7 +231,7 @@ export default function SchedulePage() {
                                                 <SelectValue placeholder="Selecione um voluntário" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {volunteersByAreaAndTeam(slot.area, slot.team).map(v => (
+                                                {getEligibleVolunteers(slot.area, slot.team, slot.event).map(v => (
                                                     <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
                                                 ))}
                                             </SelectContent>
