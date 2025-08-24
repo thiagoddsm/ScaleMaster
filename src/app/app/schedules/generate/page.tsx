@@ -194,7 +194,7 @@ export default function SchedulePage() {
     scheduleData.sort((a,b) => a.date.localeCompare(b.date));
 
     const finalData: GenerateScheduleOutput = {
-        scaleTable: "Gerado manualmente",
+        scaleTable: "Gerado manually",
         report: {
             fillRate: "",
             volunteerDistribution: "",
