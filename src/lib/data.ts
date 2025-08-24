@@ -77,10 +77,17 @@ export const teamSchedules: TeamSchedule[] = [
     { team: 'Bravo', startDate: '2024-08-05', endDate: '2024-08-11'},
     { team: 'Charlie', startDate: '2024-08-12', endDate: '2024-08-18'},
     { team: 'Delta', startDate: '2024-08-19', endDate: '2024-08-25'},
-    { team: 'Alpha', startDate: '2024-09-02', endDate: '2024-09-08'},
-    { team: 'Bravo', startDate: '2024-09-09', endDate: '2024-09-15'},
-    { team: 'Charlie', startDate: '2024-09-16', endDate: '2024-09-22'},
-    { team: 'Delta', startDate: '2024-09-23', endDate: '2024-09-29'},
+    { team: 'Alpha', startDate: '2024-08-26', endDate: '2024-09-01'},
+    { team: 'Bravo', startDate: '2024-09-02', endDate: '2024-09-08'},
+    { team: 'Charlie', startDate: '2024-09-09', endDate: '2024-09-15'},
+    { team: 'Delta', startDate: '2024-09-16', endDate: '2024-09-22'},
+    { team: 'Alpha', startDate: '2024-09-23', endDate: '2024-09-29'},
+    // New Schedules based on user request for 2025
+    { team: 'Alpha', startDate: '2025-08-03', endDate: '2025-08-09'},
+    { team: 'Bravo', startDate: '2025-08-10', endDate: '2025-08-16'},
+    { team: 'Charlie', startDate: '2025-08-17', endDate: '2025-08-23'},
+    { team: 'Delta', startDate: '2025-08-24', endDate: '2025-08-30'},
+    { team: 'Alpha', startDate: '2025-08-31', endDate: '2025-09-06'},
 ];
 
 // This is a mock in-memory storage for saved schedules.
