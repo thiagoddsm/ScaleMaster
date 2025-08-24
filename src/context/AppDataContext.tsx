@@ -10,7 +10,7 @@ import {
     teamSchedules as initialTeamSchedules,
     savedSchedules as initialSavedSchedules
 } from '@/lib/data';
-import { startOfMonth, endOfMonth, eachWeekOfInterval, format, addDays, subDays } from 'date-fns';
+import { startOfMonth, endOfMonth, eachWeekOfInterval, format, addDays } from 'date-fns';
 
 interface AppDataContextType {
   volunteers: Volunteer[];
@@ -38,6 +38,7 @@ interface AppDataContextType {
   setTeamSchedules: React.Dispatch<React.SetStateAction<TeamSchedule[]>>;
   generateTeamSchedules: (year: number, month: number, startTeam: string) => void;
   setSavedSchedules: React.Dispatch<React.SetStateAction<SavedSchedule[]>>;
+  saveSchedule: (schedule: SavedSchedule) => void;
 }
 
 const AppDataContext = createContext<AppDataContextType | undefined>(undefined);
@@ -82,9 +83,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const generateTeamSchedules = (year: number, month: number, startTeam: string) => {
     const newSchedules: TeamSchedule[] = [];
     const startDate = startOfMonth(new Date(year, month - 1));
-    const endDate = endOfMonth(new Date(year, month -1));
+    const endDate = endOfMonth(new Date(year, month - 1));
     
-    const weeks = eachWeekOfInterval({ start: startDate, end: endDate }, { weekStartsOn: 1 /* Monday */ });
+    // Using `eachWeekOfInterval` with Monday as the start of the week
+    const weeks = eachWeekOfInterval({ start: startDate, end: endDate }, { weekStartsOn: 1 });
 
     let teamIndex = teams.findIndex(t => t.name === startTeam);
     if (teamIndex === -1) teamIndex = 0; // fallback to first team
@@ -95,7 +97,6 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         
         newSchedules.push({
             team: team.name,
-            // Uses Monday of the week as start, and Sunday as end
             startDate: format(weekStart, 'yyyy-MM-dd'),
             endDate: format(weekEnd, 'yyyy-MM-dd'),
         });
@@ -105,6 +106,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
     setTeamSchedules(newSchedules);
   };
+  
+  // Saved Schedule Actions
+  const saveSchedule = (schedule: SavedSchedule) => {
+    setSavedSchedules(prev => [...prev, schedule]);
+  };
 
 
   const value = {
@@ -113,7 +119,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     teams, setTeams, addTeam, updateTeam, deleteTeam,
     areasOfService, setAreasOfService, addArea, updateArea, deleteArea,
     teamSchedules, setTeamSchedules, generateTeamSchedules,
-    savedSchedules, setSavedSchedules
+    savedSchedules, setSavedSchedules, saveSchedule,
   };
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;

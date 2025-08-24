@@ -65,6 +65,19 @@ export type SavedSchedule = {
   data: GenerateScheduleOutput;
 }
 
+// This represents one "row" or "slot" in the manual schedule creation table
+export type ScheduleSlot = {
+  date: Date;
+  dayOfWeek: string;
+  event: string;
+  eventId: string;
+  area: string;
+  team: string | null;
+  volunteerId: string | null;
+  slotKey: string;
+};
+
+
 // Renaming the imported type to avoid conflict
 export type ScheduleItem = AIScheduleItem;
 

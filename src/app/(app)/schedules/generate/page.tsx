@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { useRouter } from 'next/navigation';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
@@ -10,24 +11,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { getDaysInMonth, getDay, getDate, isWithinInterval, parseISO } from 'date-fns';
 import { useAppData } from '@/context/AppDataContext';
-import type { Volunteer } from '@/lib/types';
-
-type ScheduleSlot = {
-  date: Date;
-  dayOfWeek: string;
-  event: string;
-  eventId: string;
-  area: string;
-  team: string | null;
-  volunteerId: string | null;
-  slotKey: string;
-};
+import type { Volunteer, ScheduleSlot, SavedSchedule, GenerateScheduleOutput } from '@/lib/types';
 
 const weekDays = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
 
 export default function SchedulePage() {
   const { toast } = useToast();
-  const { volunteers, events, teamSchedules } = useAppData();
+  const router = useRouter();
+  const { volunteers, events, teamSchedules, saveSchedule, teams, areasOfService } = useAppData();
   const [year, setYear] = useState<string>(new Date().getFullYear().toString());
   const [month, setMonth] = useState<string>((new Date().getMonth() + 1).toString());
   const [isGenerating, setIsGenerating] = useState(false);
@@ -44,7 +35,8 @@ export default function SchedulePage() {
     const schedule = teamSchedules.find(s => 
         isWithinInterval(date, { start: parseISO(s.startDate), end: parseISO(s.endDate) })
     );
-    return schedule ? schedule.team : 'Alpha'; // Default to Alpha as per rule
+    // As per rule, default to Alpha if no specific schedule is found for a 5th week.
+    return schedule ? schedule.team : 'Alpha'; 
   }
 
   const generateManualScheduleSkeleton = () => {
@@ -56,7 +48,7 @@ export default function SchedulePage() {
 
     // Expand weekly events
     for (let day = 1; day <= daysInMonth; day++) {
-        const currentDate = new Date(y, m, day);
+        const currentDate = new Date(Date.UTC(y, m, day));
         const dayOfWeek = weekDays[getDay(currentDate)];
         const teamForDate = getTeamForDate(currentDate);
 
@@ -81,7 +73,7 @@ export default function SchedulePage() {
     
     // Add punctual events
      events.filter(e => e.frequency === 'Pontual' && e.date).forEach(event => {
-        const eventDate = new Date(event.date + 'T12:00:00Z');
+        const eventDate = parseISO(event.date + 'T00:00:00'); // Assuming date is in local timezone
         if (eventDate.getFullYear() === y && eventDate.getMonth() === m) {
             const dayOfWeek = weekDays[getDay(eventDate)];
             const teamForDate = getTeamForDate(eventDate);
@@ -102,7 +94,7 @@ export default function SchedulePage() {
         }
     });
 
-    slots.sort((a,b) => a.date.getTime() - b.date.getTime());
+    slots.sort((a,b) => a.date.getTime() - b.date.getTime() || a.event.localeCompare(b.event) || a.area.localeCompare(b.area));
     setScheduleSlots(slots);
     setIsGenerating(false);
   };
@@ -117,20 +109,67 @@ export default function SchedulePage() {
     return volunteers
       .filter(v => 
         v.areas.includes(areaName) &&
-        (v.team === teamName || v.team === 'N/A') && // Also include volunteers not in a specific team
+        (v.team === teamName || v.team === 'N/A' || !teamName) &&
         v.availability.includes(eventName)
       )
       .sort((a, b) => a.name.localeCompare(b.name));
   }
 
   const handleSaveSchedule = () => {
-    // This is where you would implement the logic to save the manually created schedule.
-    // For now, it will just show a toast.
-    console.log("Saving schedule:", scheduleSlots);
+    const title = `Escala de ${monthLabel} de ${year}`;
+    
+    const scheduleData = scheduleSlots.reduce((acc, slot) => {
+        const dateStr = slot.date.toISOString().split('T')[0];
+        let dayEntry = acc.find(d => d.date === dateStr);
+        if (!dayEntry) {
+            dayEntry = { date: dateStr, dayOfWeek: slot.dayOfWeek, assignments: [] };
+            acc.push(dayEntry);
+        }
+
+        const volunteer = volunteers.find(v => v.id === slot.volunteerId);
+        dayEntry.assignments.push({
+            evento: slot.event,
+            area: slot.area,
+            equipe: slot.team,
+            voluntario_alocado: volunteer?.name || null,
+            status: volunteer ? "Preenchida" : "Falha",
+            motivo: volunteer ? null : "Nenhum voluntário atribuído"
+        });
+
+        return acc;
+    }, [] as GenerateScheduleOutput['scheduleData']);
+    
+    scheduleData.sort((a,b) => a.date.localeCompare(b.date));
+
+    const finalData: GenerateScheduleOutput = {
+        // For manual schedules, these can be simplified
+        scaleTable: "Gerado manualmente",
+        report: {
+            fillRate: "",
+            volunteerDistribution: "",
+            bottlenecks: "",
+            recommendations: "Escala gerada manualmente. Análise não aplicável.",
+        },
+        scheduleData,
+    };
+    
+    const newSavedSchedule: SavedSchedule = {
+        id: `sched_${new Date().getTime()}`,
+        title: title,
+        createdAt: new Date().toISOString(),
+        year: parseInt(year),
+        month: parseInt(month),
+        data: finalData,
+    };
+
+    saveSchedule(newSavedSchedule);
+    
     toast({
-      title: 'Funcionalidade em Desenvolvimento',
-      description: 'A lógica para salvar a escala manual ainda não foi implementada.',
+      title: 'Escala Salva!',
+      description: `A escala para ${monthLabel} de ${year} foi salva com sucesso.`,
     });
+
+    router.push('/schedules');
   };
 
   return (
@@ -217,7 +256,7 @@ export default function SchedulePage() {
                                 return (
                                 <TableRow key={slot.slotKey}>
                                     <TableCell>
-                                        <div className="font-medium">{slot.date.toLocaleDateString('pt-BR')}</div>
+                                        <div className="font-medium">{slot.date.toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</div>
                                         <div className="text-sm text-muted-foreground">{slot.dayOfWeek}</div>
                                     </TableCell>
                                     <TableCell>{slot.event}</TableCell>
