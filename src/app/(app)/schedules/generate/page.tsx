@@ -19,7 +19,7 @@ const weekDays = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Q
 export default function SchedulePage() {
   const { toast } = useToast();
   const router = useRouter();
-  const { volunteers, events, teamSchedules, saveSchedule } = useAppData();
+  const { volunteers, events, teams, teamSchedules, saveSchedule } = useAppData();
   const [year, setYear] = useState<string>(new Date().getFullYear().toString());
   const [month, setMonth] = useState<string>((new Date().getMonth() + 1).toString());
   const [isGenerating, setIsGenerating] = useState(false);
@@ -123,12 +123,17 @@ export default function SchedulePage() {
     volunteers.forEach(v => serviceCount[v.id] = 0);
 
     const filledSlots = scheduleSlots.map(slot => {
+        // If a volunteer is already assigned, keep them.
+        if (slot.volunteerId) {
+            return slot;
+        }
+      
       const eligible = getEligibleVolunteers(slot.area, slot.team, slot.event);
       if (eligible.length === 0) {
         return { ...slot, volunteerId: null };
       }
 
-      // Filter out volunteers already assigned to this specific event
+      // Filter out volunteers already assigned to this specific event instance
       const assignedInEvent = scheduleSlots
         .filter(s => s.date.getTime() === slot.date.getTime() && s.event === slot.event && s.volunteerId)
         .map(s => s.volunteerId);
@@ -354,7 +359,7 @@ export default function SchedulePage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Preencher Automaticamente?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação tentará preencher todas as vagas vazias com os voluntários mais elegíveis. As atribuições manuais existentes não serão alteradas. Deseja continuar?
+              Esta ação tentará preencher todas as vagas vazias com os voluntários mais elegíveis, respeitando as regras de rodízio e disponibilidade. As atribuições manuais existentes não serão alteradas. Deseja continuar?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -366,3 +371,5 @@ export default function SchedulePage() {
     </div>
   );
 }
+
+    
