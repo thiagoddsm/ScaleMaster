@@ -66,6 +66,39 @@ export const events: Event[] = [
       { name: 'Projeção', volunteersNeeded: 1 },
     ],
   },
+  {
+    id: '3',
+    name: 'Culto Clássico',
+    frequency: 'Semanal',
+    dayOfWeek: 'Domingo',
+    time: '08:00',
+    areas: [
+      { name: 'Som', volunteersNeeded: 1 },
+      { name: 'Projeção', volunteersNeeded: 1 },
+    ],
+  },
+  {
+    id: '4',
+    name: 'Culto da Tarde',
+    frequency: 'Semanal',
+    dayOfWeek: 'Domingo',
+    time: '16:00',
+    areas: [
+      { name: 'Som', volunteersNeeded: 1 },
+      { name: 'Projeção', volunteersNeeded: 1 },
+    ],
+  },
+  {
+    id: '5',
+    name: 'Culto da Noite',
+    frequency: 'Semanal',
+    dayOfWeek: 'Domingo',
+    time: '19:00',
+    areas: [
+      { name: 'Som', volunteersNeeded: 1 },
+      { name: 'Projeção', volunteersNeeded: 1 },
+    ],
+  },
 ];
 
 export const teamSchedules: TeamSchedule[] = [
