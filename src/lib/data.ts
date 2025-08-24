@@ -4,11 +4,29 @@ export const adminUserEmail = "thiagoddsm@gmail.com";
 
 export const areasOfService: AreaOfService[] = [
     { name: "Apoio" },
-    { name: "Cantina" },
-    { name: "Kids" },
+    { name: "Bistrô" },
+    { name: "Boutique" },
+    { name: "Broadcasting" },
+    { name: "Cleaning" },
+    { name: "Coffe Break" },
+    { name: "Coordenação De Culto" },
+    { name: "Dis" },
+    { name: "Eklesia" },
+    { name: "Espaço Vip" },
+    { name: "Estacionamento" },
+    { name: "Fotografia" },
+    { name: "Iluminação" },
+    { name: "Intercessão" },
+    { name: "Live" },
+    { name: "Musikids" },
+    { name: "Professores" },
     { name: "Projeção" },
     { name: "Recepção" },
+    { name: "Saúde" },
+    { name: "Security" },
     { name: "Som" },
+    { name: "Staff" },
+    { name: "Stories" },
 ].sort((a, b) => a.name.localeCompare(b.name));
 
 export const teams: Team[] = [
