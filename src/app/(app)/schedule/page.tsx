@@ -10,14 +10,15 @@ import { Loader2, Save } from 'lucide-react';
 import { volunteers, events, teamSchedules, savedSchedules } from '@/lib/data';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import type { Event, Volunteer } from '@/lib/types';
-import { getDaysInMonth, getDay, setDate, getDate } from 'date-fns';
+import type { Event, Volunteer, Team } from '@/lib/types';
+import { getDaysInMonth, getDay, setDate, getDate, isWithinInterval, parseISO } from 'date-fns';
 
 type ScheduleSlot = {
   date: Date;
   dayOfWeek: string;
   event: string;
   area: string;
+  team: string | null;
   volunteerId: string | null;
   slotKey: string;
 };
@@ -37,6 +38,13 @@ export default function SchedulePage() {
   const monthLabel = useMemo(() => {
     return months.find(m => m.value === month)?.label || '';
   }, [month, months]);
+  
+  const getTeamForDate = (date: Date): string | null => {
+    const schedule = teamSchedules.find(s => 
+        isWithinInterval(date, { start: parseISO(s.startDate), end: parseISO(s.endDate) })
+    );
+    return schedule ? schedule.team : 'Alpha'; // Default to Alpha as per rule
+  }
 
   const generateManualScheduleSkeleton = () => {
     setIsGenerating(true);
@@ -49,6 +57,7 @@ export default function SchedulePage() {
     for (let day = 1; day <= daysInMonth; day++) {
         const currentDate = new Date(y, m, day);
         const dayOfWeek = weekDays[getDay(currentDate)];
+        const teamForDate = getTeamForDate(currentDate);
 
         events.filter(e => e.frequency === 'Semanal' && e.dayOfWeek === dayOfWeek)
             .forEach(event => {
@@ -59,6 +68,7 @@ export default function SchedulePage() {
                             dayOfWeek: dayOfWeek,
                             event: event.name,
                             area: area.name,
+                            team: teamForDate,
                             volunteerId: null,
                             slotKey: `${event.id}-${area.name}-${day}-${i}`
                         });
@@ -72,6 +82,7 @@ export default function SchedulePage() {
         const eventDate = new Date(event.date + 'T12:00:00Z');
         if (eventDate.getFullYear() === y && eventDate.getMonth() === m) {
             const dayOfWeek = weekDays[getDay(eventDate)];
+            const teamForDate = getTeamForDate(eventDate);
              event.areas.forEach(area => {
                 for (let i = 0; i < area.volunteersNeeded; i++) {
                      slots.push({
@@ -79,6 +90,7 @@ export default function SchedulePage() {
                         dayOfWeek: dayOfWeek,
                         event: event.name,
                         area: area.name,
+                        team: teamForDate,
                         volunteerId: null,
                         slotKey: `${event.id}-${area.name}-${getDate(eventDate)}-${i}`
                     });
@@ -98,9 +110,9 @@ export default function SchedulePage() {
     );
   };
   
-  const volunteersByArea = (areaName: string) => {
+  const volunteersByAreaAndTeam = (areaName: string, teamName: string | null) => {
     return volunteers
-      .filter(v => v.areas.includes(areaName))
+      .filter(v => v.areas.includes(areaName) && (v.team === teamName || v.team === 'N/A'))
       .sort((a, b) => a.name.localeCompare(b.name));
   }
 
@@ -188,6 +200,7 @@ export default function SchedulePage() {
                                 <TableHead>Data</TableHead>
                                 <TableHead>Evento</TableHead>
                                 <TableHead>Área</TableHead>
+                                <TableHead>Equipe</TableHead>
                                 <TableHead className="w-[250px]">Voluntário</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -202,6 +215,9 @@ export default function SchedulePage() {
                                     <TableCell>
                                         <Badge variant="outline">{slot.area}</Badge>
                                     </TableCell>
+                                     <TableCell>
+                                        {slot.team && <Badge variant="secondary">{slot.team}</Badge>}
+                                    </TableCell>
                                     <TableCell>
                                         <Select
                                             value={slot.volunteerId ?? ''}
@@ -211,8 +227,8 @@ export default function SchedulePage() {
                                                 <SelectValue placeholder="Selecione um voluntário" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="EMPTY" disabled>Selecione um voluntário</SelectItem>
-                                                {volunteersByArea(slot.area).map(v => (
+                                                <SelectItem value="" disabled>Selecione um voluntário</SelectItem>
+                                                {volunteersByAreaAndTeam(slot.area, slot.team).map(v => (
                                                     <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
                                                 ))}
                                             </SelectContent>
