@@ -258,7 +258,7 @@ export default function SchedulesPage() {
                   <TableHead>Evento</TableHead>
                   <TableHead>Área</TableHead>
                   <TableHead>Equipe</TableHead>
-                  <TableHead>Voluntário</TableHead>
+                  <TableHead>Voluntário / Motivo da Falha</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
@@ -332,7 +332,7 @@ export default function SchedulesPage() {
               Esta ação não pode ser desfeita. Isso excluirá permanentemente a escala de {' '}
               {scheduleToDelete ? `${months.find(m => m.value === String(scheduleToDelete.month))?.label} de ${scheduleToDelete.year}` : 'selecionada'}.
             </AlertDialogDescription>
-          </AlertDialogHeader>
+          </Header>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90">
