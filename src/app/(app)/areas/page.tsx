@@ -13,10 +13,10 @@ import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { areasOfService as initialAreasOfService } from '@/lib/data';
 import type { AreaOfService } from '@/lib/types';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { useAppData } from '@/context/AppDataContext';
 
 
 const areaSchema = z.object({
@@ -26,7 +26,7 @@ const areaSchema = z.object({
 });
 
 export default function AreasPage() {
-  const [areas, setAreas] = useState<AreaOfService[]>(initialAreasOfService);
+  const { areasOfService, addArea, updateArea, deleteArea } = useAppData();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedArea, setSelectedArea] = useState<AreaOfService | null>(null);
@@ -56,7 +56,7 @@ export default function AreasPage() {
 
   function confirmDelete() {
     if (selectedArea) {
-      setAreas(areas.filter((a) => a.name !== selectedArea.name));
+      deleteArea(selectedArea.name);
       toast({
         title: "Sucesso!",
         description: "Área de serviço excluída.",
@@ -69,7 +69,7 @@ export default function AreasPage() {
   function onSubmit(data: z.infer<typeof areaSchema>) {
     if (selectedArea) {
       // Edit
-      setAreas(areas.map((a) => a.name === selectedArea.name ? { ...a, ...data } : a));
+      updateArea(selectedArea.name, data);
        toast({
         title: "Sucesso!",
         description: "Área de serviço atualizada.",
@@ -77,11 +77,11 @@ export default function AreasPage() {
       });
     } else {
       // Add
-      if (areas.find(a => a.name.toLowerCase() === data.name.toLowerCase())) {
+      if (areasOfService.find(a => a.name.toLowerCase() === data.name.toLowerCase())) {
         form.setError("name", { type: "manual", message: "Essa área de serviço já existe." });
         return;
       }
-      setAreas([...areas, data].sort((a,b) => a.name.localeCompare(b.name)));
+      addArea(data);
        toast({
         title: "Sucesso!",
         description: "Nova área de serviço adicionada.",
@@ -123,7 +123,7 @@ export default function AreasPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {areas.map((area) => (
+                {areasOfService.map((area) => (
                   <TableRow key={area.name} className="group cursor-pointer">
                     <TableCell className="font-medium">
                       <Link href={`/areas/${encodeURIComponent(area.name)}`} className="flex items-center gap-2 hover:underline">

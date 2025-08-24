@@ -12,7 +12,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { areasOfService as allAreas, volunteers as allVolunteers, teams, events as allEvents } from '@/lib/data';
 import type { AreaOfService, Volunteer } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -22,10 +21,8 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useAppData } from '@/context/AppDataContext';
 
-
-const availabilityItems = Array.from(new Set(allEvents.map(e => e.name)));
-const allTeams = [...teams.map(t => t.name), "N/A"];
 
 const volunteerSchema = z.object({
   id: z.string().optional(),
@@ -41,11 +38,11 @@ const volunteerSchema = z.object({
 export default function AreaDetailPage() {
   const params = useParams();
   const { toast } = useToast();
+  const { volunteers, teams, areasOfService, events, updateVolunteer } = useAppData();
   const areaName = decodeURIComponent(params.name as string);
 
   // Data states
-  const [area, setArea] = useState<AreaOfService | undefined>(() => allAreas.find(a => a.name === areaName));
-  const [volunteers, setVolunteers] = useState<Volunteer[]>(() => allVolunteers);
+  const [area, setArea] = useState<AreaOfService | undefined>(() => areasOfService.find(a => a.name === areaName));
   
   // Dialog states
   const [isAddVolunteeerDialogOpen, setIsAddVolunteeerDialogOpen] = useState(false);
@@ -61,6 +58,9 @@ export default function AreaDetailPage() {
     resolver: zodResolver(volunteerSchema),
     defaultValues: { name: '', team: '', areas: [], availability: [], phone: '', email: '' },
   });
+
+  const availabilityItems = useMemo(() => Array.from(new Set(events.map(e => e.name))), [events]);
+  const allTeams = useMemo(() => [...teams.map(t => t.name), "N/A"], [teams]);
   
   const volunteersInArea = useMemo(() => {
     return volunteers.filter(v => v.areas.includes(areaName)).sort((a,b) => a.name.localeCompare(b.name));
@@ -71,9 +71,9 @@ export default function AreaDetailPage() {
   }, [volunteers, areaName]);
 
   useEffect(() => {
-    const foundArea = allAreas.find(a => a.name === areaName);
+    const foundArea = areasOfService.find(a => a.name === areaName);
     setArea(foundArea);
-  }, [areaName]);
+  }, [areaName, areasOfService]);
 
   if (!area) {
     notFound();
@@ -84,14 +84,11 @@ export default function AreaDetailPage() {
         toast({ variant: 'destructive', title: 'Erro', description: 'Selecione um voluntário para adicionar.' });
         return;
     }
-    const updatedVolunteers = volunteers.map(v => {
-        if (v.id === volunteerToAdd) {
-            return { ...v, areas: [...v.areas, areaName] };
-        }
-        return v;
-    });
-    setVolunteers(updatedVolunteers);
-    toast({ title: 'Sucesso', description: 'Voluntário adicionado à área.' });
+    const volunteer = volunteers.find(v => v.id === volunteerToAdd);
+    if(volunteer) {
+        updateVolunteer(volunteer.id, { ...volunteer, areas: [...volunteer.areas, areaName] });
+        toast({ title: 'Sucesso', description: 'Voluntário adicionado à área.' });
+    }
     setVolunteerToAdd('');
     setIsAddVolunteeerDialogOpen(false);
   }
@@ -104,13 +101,11 @@ export default function AreaDetailPage() {
   function confirmRemoveVolunteer() {
     if (!volunteerToRemove) return;
     
-    const updatedVolunteers = volunteers.map(v => {
-        if (v.id === volunteerToRemove.id) {
-            return { ...v, areas: v.areas.filter(a => a !== areaName) };
-        }
-        return v;
+    updateVolunteer(volunteerToRemove.id, {
+        ...volunteerToRemove,
+        areas: volunteerToRemove.areas.filter(a => a !== areaName)
     });
-    setVolunteers(updatedVolunteers);
+
     toast({ title: 'Sucesso', description: `Voluntário removido da área.` });
     setIsRemoveVolunteeerDialogOpen(false);
     setVolunteerToRemove(null);
@@ -124,7 +119,7 @@ export default function AreaDetailPage() {
   
   function onVolunteerSubmit(data: z.infer<typeof volunteerSchema>) {
     if (volunteerToEdit) {
-        setVolunteers(volunteers.map(v => v.id === volunteerToEdit.id ? { ...v, ...data } : v).sort((a, b) => a.name.localeCompare(b.name)));
+        updateVolunteer(volunteerToEdit.id, { ...volunteerToEdit, ...data });
         toast({
             title: "Sucesso!",
             description: "Voluntário atualizado.",
@@ -137,16 +132,14 @@ export default function AreaDetailPage() {
   }
   
   function handleTeamChange(volunteerId: string, newTeam: string) {
-    setVolunteers(prevVolunteers => 
-      prevVolunteers.map(v => 
-        v.id === volunteerId ? { ...v, team: newTeam } : v
-      )
-    );
     const volunteer = volunteers.find(v => v.id === volunteerId);
-    toast({
-        title: "Equipe Atualizada",
-        description: `${volunteer?.name} agora está na equipe ${newTeam}.`
-    });
+    if (volunteer) {
+        updateVolunteer(volunteerId, { ...volunteer, team: newTeam });
+        toast({
+            title: "Equipe Atualizada",
+            description: `${volunteer.name} agora está na equipe ${newTeam}.`
+        });
+    }
   }
 
 
@@ -336,7 +329,7 @@ export default function AreaDetailPage() {
                     <FormItem>
                         <FormLabel>Áreas de Serviço</FormLabel>
                         <div className="space-y-2 p-2 border rounded-md max-h-40 overflow-y-auto">
-                        {allAreas.map((area) => (
+                        {areasOfService.map((area) => (
                             <FormField key={area.name} control={form.control} name="areas" render={({ field }) => (
                             <FormItem key={area.name} className="flex flex-row items-start space-x-3 space-y-0">
                                 <FormControl>

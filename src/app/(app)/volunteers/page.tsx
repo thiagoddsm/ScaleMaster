@@ -15,15 +15,10 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { volunteers as initialVolunteers, teams, areasOfService, events } from '@/lib/data';
 import type { Volunteer } from '@/lib/types';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-
-
-const availabilityItems = Array.from(new Set(events.map(e => e.name)));
-const allTeams = [...teams.map(t => t.name), "N/A"];
-
+import { useAppData } from '@/context/AppDataContext';
 
 const volunteerSchema = z.object({
   id: z.string().optional(),
@@ -36,7 +31,7 @@ const volunteerSchema = z.object({
 });
 
 export default function VolunteersPage() {
-  const [volunteers, setVolunteers] = useState<Volunteer[]>(initialVolunteers.sort((a, b) => a.name.localeCompare(b.name)));
+  const { volunteers, teams, areasOfService, events, updateVolunteer, addVolunteer, deleteVolunteer } = useAppData();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
@@ -51,6 +46,9 @@ export default function VolunteersPage() {
     resolver: zodResolver(volunteerSchema),
     defaultValues: { name: '', team: '', areas: [], availability: [], phone: '', email: '' },
   });
+
+  const availabilityItems = React.useMemo(() => Array.from(new Set(events.map(e => e.name))), [events]);
+  const allTeams = React.useMemo(() => [...teams.map(t => t.name), "N/A"], [teams]);
   
   function handleAdd() {
     setSelectedVolunteer(null);
@@ -71,7 +69,7 @@ export default function VolunteersPage() {
 
   function confirmDelete() {
     if (selectedVolunteer) {
-        setVolunteers(volunteers.filter(v => v.id !== selectedVolunteer.id));
+        deleteVolunteer(selectedVolunteer.id);
         toast({
             title: "Sucesso!",
             description: "Voluntário excluído.",
@@ -82,23 +80,21 @@ export default function VolunteersPage() {
   }
 
   function handleTeamChange(volunteerId: string, newTeam: string) {
-    setVolunteers(prevVolunteers => 
-      prevVolunteers.map(v => 
-        v.id === volunteerId ? { ...v, team: newTeam } : v
-      )
-    );
     const volunteer = volunteers.find(v => v.id === volunteerId);
-    toast({
-        title: "Equipe Atualizada",
-        description: `${volunteer?.name} agora está na equipe ${newTeam}.`
-    });
+    if (volunteer) {
+        updateVolunteer(volunteerId, { ...volunteer, team: newTeam });
+        toast({
+            title: "Equipe Atualizada",
+            description: `${volunteer.name} agora está na equipe ${newTeam}.`
+        });
+    }
   }
 
 
   function onSubmit(data: z.infer<typeof volunteerSchema>) {
     if (selectedVolunteer) {
         // Edit
-        setVolunteers(volunteers.map(v => v.id === selectedVolunteer.id ? { ...v, ...data } : v).sort((a, b) => a.name.localeCompare(b.name)));
+        updateVolunteer(selectedVolunteer.id, { ...selectedVolunteer, ...data });
         toast({
             title: "Sucesso!",
             description: "Voluntário atualizado.",
@@ -106,11 +102,7 @@ export default function VolunteersPage() {
         });
     } else {
         // Add
-        const newVolunteer: Volunteer = {
-            id: (volunteers.length + 1).toString(),
-            ...data,
-        };
-        setVolunteers([...volunteers, newVolunteer].sort((a, b) => a.name.localeCompare(b.name)));
+        addVolunteer({ ...data, id: `v_${new Date().getTime()}`});
         toast({
             title: "Sucesso!",
             description: "Novo voluntário adicionado.",
@@ -129,7 +121,7 @@ export default function VolunteersPage() {
     const areaMatch = areaFilter === 'all' || volunteer.areas.includes(areaFilter);
     const availabilityMatch = availabilityFilter === 'all' || volunteer.availability.includes(availabilityFilter);
     return nameMatch && teamMatch && areaMatch && availabilityMatch;
-  });
+  }).sort((a, b) => a.name.localeCompare(b.name));
   
   return (
     <div className="space-y-8">

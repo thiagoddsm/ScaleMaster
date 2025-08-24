@@ -15,12 +15,12 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { events as initialEvents, areasOfService } from '@/lib/data';
-import type { Event, EventArea } from '@/lib/types';
+import type { Event } from '@/lib/types';
 import { Textarea } from '@/components/ui/textarea';
 import { format, parseISO } from 'date-fns';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { useAppData } from '@/context/AppDataContext';
 
 const eventAreaSchema = z.object({
   name: z.string(),
@@ -56,7 +56,7 @@ const eventSchema = z.object({
 const weekDays = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
 
 export default function EventsPage() {
-  const [events, setEvents] = useState<Event[]>(initialEvents);
+  const { events, areasOfService, addEvent, updateEvent, deleteEvent } = useAppData();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
@@ -67,7 +67,7 @@ export default function EventsPage() {
     defaultValues: { name: '', frequency: 'Semanal', time: '', areas: [] },
   });
   
-  const { fields, append, remove, update } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "areas"
   });
@@ -108,7 +108,7 @@ export default function EventsPage() {
 
   function confirmDelete() {
     if (selectedEvent) {
-        setEvents(events.filter(v => v.id !== selectedEvent.id));
+        deleteEvent(selectedEvent.id);
         toast({
             title: "Sucesso!",
             description: "Evento excluído.",
@@ -122,13 +122,13 @@ export default function EventsPage() {
   function onSubmit(data: z.infer<typeof eventSchema>) {
     const formattedData: Event = {
         ...data,
-        id: selectedEvent ? selectedEvent.id : (events.length + 1).toString(),
+        id: selectedEvent ? selectedEvent.id : `e_${new Date().getTime()}`,
         date: data.date ? format(new Date(data.date+'T12:00:00Z'), 'yyyy-MM-dd') : undefined,
     }
 
     if (selectedEvent) {
         // Edit
-        setEvents(events.map(e => e.id === selectedEvent.id ? formattedData : e));
+        updateEvent(selectedEvent.id, formattedData);
          toast({
             title: "Sucesso!",
             description: "Evento atualizado.",
@@ -136,7 +136,7 @@ export default function EventsPage() {
         });
     } else {
         // Add
-        setEvents([...events, formattedData]);
+        addEvent(formattedData);
          toast({
             title: "Sucesso!",
             description: "Novo evento adicionado.",

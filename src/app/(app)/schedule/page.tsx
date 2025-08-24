@@ -7,16 +7,16 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Save } from 'lucide-react';
-import { volunteers, events, teamSchedules, savedSchedules } from '@/lib/data';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import type { Event, Volunteer, Team } from '@/lib/types';
-import { getDaysInMonth, getDay, setDate, getDate, isWithinInterval, parseISO } from 'date-fns';
+import { getDaysInMonth, getDay, getDate, isWithinInterval, parseISO } from 'date-fns';
+import { useAppData } from '@/context/AppDataContext';
 
 type ScheduleSlot = {
   date: Date;
   dayOfWeek: string;
   event: string;
+  eventId: string;
   area: string;
   team: string | null;
   volunteerId: string | null;
@@ -27,6 +27,7 @@ const weekDays = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Q
 
 export default function SchedulePage() {
   const { toast } = useToast();
+  const { volunteers, events, teamSchedules } = useAppData();
   const [year, setYear] = useState<string>(new Date().getFullYear().toString());
   const [month, setMonth] = useState<string>((new Date().getMonth() + 1).toString());
   const [isGenerating, setIsGenerating] = useState(false);
@@ -67,6 +68,7 @@ export default function SchedulePage() {
                             date: currentDate,
                             dayOfWeek: dayOfWeek,
                             event: event.name,
+                            eventId: event.id,
                             area: area.name,
                             team: teamForDate,
                             volunteerId: null,
@@ -89,6 +91,7 @@ export default function SchedulePage() {
                         date: eventDate,
                         dayOfWeek: dayOfWeek,
                         event: event.name,
+                        eventId: event.id,
                         area: area.name,
                         team: teamForDate,
                         volunteerId: null,
@@ -209,7 +212,9 @@ export default function SchedulePage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                           {scheduleSlots.map((slot) => (
+                           {scheduleSlots.map((slot) => {
+                                const eligibleVolunteers = getEligibleVolunteers(slot.area, slot.team, slot.event);
+                                return (
                                 <TableRow key={slot.slotKey}>
                                     <TableCell>
                                         <div className="font-medium">{slot.date.toLocaleDateString('pt-BR')}</div>
@@ -231,14 +236,18 @@ export default function SchedulePage() {
                                                 <SelectValue placeholder="Selecione um voluntário" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {getEligibleVolunteers(slot.area, slot.team, slot.event).map(v => (
-                                                    <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
-                                                ))}
+                                                {eligibleVolunteers.length > 0 ? (
+                                                  eligibleVolunteers.map(v => (
+                                                      <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
+                                                  ))
+                                                ) : (
+                                                  <SelectItem value="none" disabled>Nenhum voluntário elegível</SelectItem>
+                                                )}
                                             </SelectContent>
                                         </Select>
                                     </TableCell>
                                 </TableRow>
-                           ))}
+                           )})}
                         </TableBody>
                     </Table>
                 </div>

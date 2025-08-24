@@ -4,7 +4,6 @@ import React, { useState, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { savedSchedules as initialSavedSchedules, events as allEvents, areasOfService as allAreas, teams as allTeams, volunteers as allVolunteers } from '@/lib/data';
 import type { SavedSchedule, ScheduleAssignment } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -12,11 +11,12 @@ import { Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
+import { useAppData } from '@/context/AppDataContext';
 
 const weekDays = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
 
 export default function SchedulesPage() {
-  const [schedules, setSchedules] = useState<SavedSchedule[]>(initialSavedSchedules);
+  const { savedSchedules, events, areasOfService, teams, volunteers, setSavedSchedules } = useAppData();
   const [year, setYear] = useState<string>(new Date().getFullYear().toString());
   const [month, setMonth] = useState<string>((new Date().getMonth() + 1).toString());
   const { toast } = useToast();
@@ -34,10 +34,10 @@ export default function SchedulesPage() {
   const months = Array.from({ length: 12 }, (_, i) => ({ value: (i + 1).toString(), label: new Date(0, i).toLocaleString('pt-BR', { month: 'long' }) }));
 
   const handleAssignmentChange = (scheduleId: string, assignmentDate: string, assignmentIdentifier: string, newVolunteerId: string) => {
-    const newVolunteer = allVolunteers.find(v => v.id === newVolunteerId);
+    const newVolunteer = volunteers.find(v => v.id === newVolunteerId);
     if (!newVolunteer) return;
 
-    setSchedules(prevSchedules => {
+    setSavedSchedules(prevSchedules => {
       return prevSchedules.map(schedule => {
         if (schedule.id !== scheduleId) return schedule;
 
@@ -77,7 +77,7 @@ export default function SchedulesPage() {
     const numericYear = parseInt(year);
     const numericMonth = parseInt(month);
 
-    const relevantSchedules = schedules.filter(s => s.year === numericYear && s.month === numericMonth);
+    const relevantSchedules = savedSchedules.filter(s => s.year === numericYear && s.month === numericMonth);
     
     if (relevantSchedules.length === 0) {
         return [];
@@ -120,7 +120,7 @@ export default function SchedulesPage() {
         return searchMatch && dayOfWeekMatch && eventMatch && areaMatch && teamMatch;
     });
 
-  }, [schedules, year, month, searchTerm, dayOfWeekFilter, eventFilter, areaFilter, teamFilter]);
+  }, [savedSchedules, year, month, searchTerm, dayOfWeekFilter, eventFilter, areaFilter, teamFilter]);
 
   return (
     <div className="space-y-8">
@@ -190,7 +190,7 @@ export default function SchedulesPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os Eventos</SelectItem>
-                  {allEvents.map(event => <SelectItem key={event.id} value={event.name}>{event.name}</SelectItem>)}
+                  {events.map(event => <SelectItem key={event.id} value={event.name}>{event.name}</SelectItem>)}
                 </SelectContent>
               </Select>
               <Select value={areaFilter} onValueChange={setAreaFilter}>
@@ -199,7 +199,7 @@ export default function SchedulesPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas as Áreas</SelectItem>
-                  {allAreas.map(area => <SelectItem key={area.name} value={area.name}>{area.name}</SelectItem>)}
+                  {areasOfService.map(area => <SelectItem key={area.name} value={area.name}>{area.name}</SelectItem>)}
                 </SelectContent>
               </Select>
               <Select value={teamFilter} onValueChange={setTeamFilter}>
@@ -208,7 +208,7 @@ export default function SchedulesPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas as Equipes</SelectItem>
-                  {allTeams.map(team => <SelectItem key={team.name} value={team.name}>{team.name}</SelectItem>)}
+                  {teams.map(team => <SelectItem key={team.name} value={team.name}>{team.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -230,7 +230,7 @@ export default function SchedulesPage() {
               <TableBody>
                 {filteredAssignments.length > 0 ? (
                   filteredAssignments.map((assignment, index) => {
-                    const availableVolunteers = allVolunteers.filter(v => v.areas.includes(assignment.area) && v.name !== assignment.voluntario_alocado);
+                    const availableVolunteers = volunteers.filter(v => v.areas.includes(assignment.area) && v.name !== assignment.voluntario_alocado);
                     const assignmentIdentifier = `${assignment.evento}-${assignment.area}-${assignment.voluntario_alocado}`;
                     return(
                     <TableRow key={`${assignment.fullDate}-${assignment.evento}-${assignment.area}-${index}`}>

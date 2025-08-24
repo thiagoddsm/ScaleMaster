@@ -1,10 +1,13 @@
+"use client";
+
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, CalendarCheck, CalendarPlus, Users, Shield, Construction } from 'lucide-react';
-import { events, volunteers, areasOfService, teams } from '@/lib/data';
+import { useAppData } from '@/context/AppDataContext';
 
 export default function DashboardPage() {
+  const { volunteers, events, areasOfService, teams } = useAppData();
   const upcomingEvents = events.filter(e => e.date && new Date(e.date) > new Date()).length;
 
   return (

@@ -12,10 +12,10 @@ import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { teams as initialTeams } from '@/lib/data';
 import type { Team } from '@/lib/types';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { useAppData } from '@/context/AppDataContext';
 
 
 const teamSchema = z.object({
@@ -23,7 +23,7 @@ const teamSchema = z.object({
 });
 
 export default function TeamsPage() {
-  const [teams, setTeams] = useState<Team[]>(initialTeams);
+  const { teams, addTeam, updateTeam, deleteTeam } = useAppData();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
@@ -53,7 +53,7 @@ export default function TeamsPage() {
 
   function confirmDelete() {
     if (selectedTeam) {
-      setTeams(teams.filter((t) => t.name !== selectedTeam.name));
+      deleteTeam(selectedTeam.name);
       toast({
         title: "Sucesso!",
         description: "Equipe excluída.",
@@ -66,7 +66,7 @@ export default function TeamsPage() {
   function onSubmit(data: z.infer<typeof teamSchema>) {
     if (selectedTeam) {
       // Edit
-      setTeams(teams.map((t) => t.name === selectedTeam.name ? { ...t, ...data } : t));
+      updateTeam(selectedTeam.name, data);
        toast({
         title: "Sucesso!",
         description: "Equipe atualizada.",
@@ -78,7 +78,7 @@ export default function TeamsPage() {
         form.setError("name", { type: "manual", message: "Essa equipe já existe." });
         return;
       }
-      setTeams([...teams, data].sort((a,b) => a.name.localeCompare(b.name)));
+      addTeam(data);
        toast({
         title: "Sucesso!",
         description: "Nova equipe adicionada.",
