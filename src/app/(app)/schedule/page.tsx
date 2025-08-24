@@ -227,7 +227,6 @@ export default function SchedulePage() {
                                                 <SelectValue placeholder="Selecione um voluntário" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="" disabled>Selecione um voluntário</SelectItem>
                                                 {volunteersByAreaAndTeam(slot.area, slot.team).map(v => (
                                                     <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
                                                 ))}
