@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-      router.push('/dashboard');
+      router.push('/app/dashboard');
     } catch (error) {
       console.error("Error signing in with Google: ", error);
     }
@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     try {
       await firebaseSignOut(auth);
-      router.push('/login');
+      router.push('/auth/login');
     } catch (error) {
       console.error("Error signing out: ", error);
     }
