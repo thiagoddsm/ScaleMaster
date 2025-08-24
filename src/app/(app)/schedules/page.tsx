@@ -332,7 +332,7 @@ export default function SchedulesPage() {
               Esta ação não pode ser desfeita. Isso excluirá permanentemente a escala de {' '}
               {scheduleToDelete ? `${months.find(m => m.value === String(scheduleToDelete.month))?.label} de ${scheduleToDelete.year}` : 'selecionada'}.
             </AlertDialogDescription>
-          </Header>
+          </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90">
