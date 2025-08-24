@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -11,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { getDaysInMonth, getDay, getDate, isWithinInterval, parseISO } from 'date-fns';
 import { useAppData } from '@/context/AppDataContext';
+import type { Volunteer } from '@/lib/types';
 
 type ScheduleSlot = {
   date: Date;
@@ -113,11 +113,11 @@ export default function SchedulePage() {
     );
   };
   
-  const getEligibleVolunteers = (areaName: string, teamName: string | null, eventName: string) => {
+  const getEligibleVolunteers = (areaName: string, teamName: string | null, eventName: string): Volunteer[] => {
     return volunteers
       .filter(v => 
         v.areas.includes(areaName) &&
-        (v.team === teamName || v.team === 'N/A') &&
+        (v.team === teamName || v.team === 'N/A') && // Also include volunteers not in a specific team
         v.availability.includes(eventName)
       )
       .sort((a, b) => a.name.localeCompare(b.name));

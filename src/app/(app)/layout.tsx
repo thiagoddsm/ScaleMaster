@@ -3,12 +3,13 @@
 import * as React from "react"
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Blocks, Calendar, LayoutDashboard, Users, Construction, Shield, LogOut, Cog, Bot, Archive } from 'lucide-react';
-import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
+import { Blocks, Calendar, LayoutDashboard, Users, Construction, Shield, LogOut, Cog, Bot, Archive, CalendarDays } from 'lucide-react';
+import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger, SidebarInset, SidebarGroup, SidebarGroupLabel, SidebarMenuSub, SidebarMenuSubButton } from '@/components/ui/sidebar';
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AppDataProvider } from "@/context/AppDataContext";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const menuItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -16,8 +17,6 @@ const menuItems = [
   { href: '/events', label: 'Eventos', icon: Calendar },
   { href: '/areas', label: 'Áreas de Serviço', icon: Construction },
   { href: '/teams', label: 'Equipes', icon: Shield },
-  { href: '/schedule', label: 'Gerar Escala', icon: Bot },
-  { href: '/schedules', label: 'Escalas Salvas', icon: Archive },
 ];
 
 const bottomMenuItems = [
@@ -28,6 +27,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, loading, signOut } = useAuth();
+  const [isSchedulesOpen, setIsSchedulesOpen] = React.useState(pathname.startsWith('/schedules'));
 
   React.useEffect(() => {
     if (!loading && !user) {
@@ -69,7 +69,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     asChild
-                    isActive={pathname.startsWith(item.href)}
+                    isActive={pathname === item.href}
                     tooltip={{
                       children: item.label,
                       className: "bg-primary text-primary-foreground",
@@ -82,6 +82,41 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+               <Collapsible open={isSchedulesOpen} onOpenChange={setIsSchedulesOpen} className="w-full">
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton
+                      isActive={pathname.startsWith('/schedules')}
+                      tooltip={{
+                        children: "Escalas",
+                        className: "bg-primary text-primary-foreground",
+                      }}
+                    >
+                      <Bot />
+                      <span>Escalas</span>
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                </SidebarMenuItem>
+                <CollapsibleContent>
+                    <SidebarMenuSub>
+                        <SidebarMenuSubItem>
+                             <SidebarMenuSubButton asChild isActive={pathname === '/schedules/generate'}>
+                                <Link href="/schedules/generate">Gerar Escala</Link>
+                            </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                        <SidebarMenuSubItem>
+                             <SidebarMenuSubButton asChild isActive={pathname === '/schedules'}>
+                                <Link href="/schedules">Escalas Salvas</Link>
+                            </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                         <SidebarMenuSubItem>
+                             <SidebarMenuSubButton asChild isActive={pathname === '/schedules/calendar'}>
+                                <Link href="/schedules/calendar">Calendário de Equipes</Link>
+                            </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                    </SidebarMenuSub>
+                </CollapsibleContent>
+               </Collapsible>
             </SidebarMenu>
             <SidebarMenu>
               {bottomMenuItems.map((item) => (
