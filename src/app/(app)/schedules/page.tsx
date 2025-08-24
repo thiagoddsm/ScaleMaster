@@ -7,19 +7,23 @@ import { Badge } from '@/components/ui/badge';
 import type { SavedSchedule, ScheduleAssignment } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import { Search, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { useAppData } from '@/context/AppDataContext';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 const weekDays = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
 
 export default function SchedulesPage() {
-  const { savedSchedules, events, areasOfService, teams, volunteers, setSavedSchedules } = useAppData();
+  const { savedSchedules, events, areasOfService, teams, volunteers, updateSavedSchedule, deleteSchedule } = useAppData();
   const [year, setYear] = useState<string>(new Date().getFullYear().toString());
   const [month, setMonth] = useState<string>((new Date().getMonth() + 1).toString());
   const { toast } = useToast();
+
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [scheduleToDelete, setScheduleToDelete] = useState<SavedSchedule | null>(null);
 
 
   // Filter states
@@ -33,39 +37,43 @@ export default function SchedulesPage() {
   const years = Array.from({ length: 10 }, (_, i) => (new Date().getFullYear() - 5 + i).toString());
   const months = Array.from({ length: 12 }, (_, i) => ({ value: (i + 1).toString(), label: new Date(0, i).toLocaleString('pt-BR', { month: 'long' }) }));
 
+  const selectedMonthSchedules = useMemo(() => {
+    const numericYear = parseInt(year);
+    const numericMonth = parseInt(month);
+    return savedSchedules.filter(s => s.year === numericYear && s.month === numericMonth);
+  }, [savedSchedules, year, month]);
+
   const handleAssignmentChange = (scheduleId: string, assignmentDate: string, assignmentIdentifier: string, newVolunteerId: string) => {
     const newVolunteer = volunteers.find(v => v.id === newVolunteerId);
     if (!newVolunteer) return;
 
-    setSavedSchedules(prevSchedules => {
-      return prevSchedules.map(schedule => {
-        if (schedule.id !== scheduleId) return schedule;
-
-        const updatedData = {
-          ...schedule.data,
-          scheduleData: schedule.data.scheduleData.map(day => {
+    const scheduleToUpdate = savedSchedules.find(s => s.id === scheduleId);
+    if (!scheduleToUpdate) return;
+    
+    const updatedData = {
+        ...scheduleToUpdate.data,
+        scheduleData: scheduleToUpdate.data.scheduleData.map(day => {
             if (day.date !== assignmentDate) return day;
 
-            return {
-              ...day,
-              assignments: day.assignments.map(assignment => {
-                const currentIdentifier = `${assignment.evento}-${assignment.area}-${assignment.voluntario_alocado}`;
-                if (currentIdentifier !== assignmentIdentifier) return assignment;
+            let identifierMatch = false;
+            const updatedAssignments = day.assignments.map((assignment, index) => {
+                // Use a more robust identifier that includes the index to handle identical slots
+                const currentIdentifier = `${assignment.evento}-${assignment.area}-${assignment.voluntario_alocado}-${index}`;
+                if (currentIdentifier !== assignmentIdentifier || identifierMatch) return assignment;
                 
+                identifierMatch = true;
                 return {
-                  ...assignment,
-                  voluntario_alocado: newVolunteer.name,
-                  status: "Preenchida" as "Preenchida" | "Falha",
-                  motivo: null,
+                    ...assignment,
+                    voluntario_alocado: newVolunteer.name,
+                    status: "Preenchida" as "Preenchida" | "Falha",
+                    motivo: null,
                 };
-              }),
-            };
-          }),
-        };
-
-        return { ...schedule, data: updatedData };
-      });
-    });
+            });
+             return { ...day, assignments: updatedAssignments };
+        }),
+    };
+    
+    updateSavedSchedule(scheduleId, { ...scheduleToUpdate, data: updatedData });
 
     toast({
       title: "Escala Atualizada",
@@ -74,24 +82,22 @@ export default function SchedulesPage() {
   };
 
   const filteredAssignments = useMemo(() => {
-    const numericYear = parseInt(year);
-    const numericMonth = parseInt(month);
-
-    const relevantSchedules = savedSchedules.filter(s => s.year === numericYear && s.month === numericMonth);
-    
-    if (relevantSchedules.length === 0) {
+    if (selectedMonthSchedules.length === 0) {
         return [];
     }
 
-    const allAssignments: (ScheduleAssignment & { scheduleId: string })[] = relevantSchedules.flatMap(s => 
-        s.data.scheduleData.flatMap(day => 
-            day.assignments.map(assignment => ({
-                ...assignment,
-                fullDate: day.date,
-                dayOfWeek: day.dayOfWeek,
-                scheduleId: s.id,
-            }))
-        )
+    // Use the first schedule for the month as the base for display.
+    // In a multi-schedule-per-month scenario, this logic might need refinement.
+    const displaySchedule = selectedMonthSchedules[0];
+
+    const allAssignments: (ScheduleAssignment & { scheduleId: string; assignmentIndex: number })[] = displaySchedule.data.scheduleData.flatMap(day => 
+        day.assignments.map((assignment, index) => ({
+            ...assignment,
+            fullDate: day.date,
+            dayOfWeek: day.dayOfWeek,
+            scheduleId: displaySchedule.id,
+            assignmentIndex: index, // Add index for a unique key
+        }))
     );
 
     const sortedAssignments = allAssignments.sort((a, b) => {
@@ -120,7 +126,25 @@ export default function SchedulesPage() {
         return searchMatch && dayOfWeekMatch && eventMatch && areaMatch && teamMatch;
     });
 
-  }, [savedSchedules, year, month, searchTerm, dayOfWeekFilter, eventFilter, areaFilter, teamFilter]);
+  }, [selectedMonthSchedules, searchTerm, dayOfWeekFilter, eventFilter, areaFilter, teamFilter]);
+
+  const handleDeleteClick = (schedule: SavedSchedule) => {
+    setScheduleToDelete(schedule);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (scheduleToDelete) {
+        deleteSchedule(scheduleToDelete.id);
+        toast({
+            title: "Escala Excluída!",
+            description: "A escala selecionada foi removida permanentemente.",
+        });
+        setIsDeleteDialogOpen(false);
+        setScheduleToDelete(null);
+    }
+  };
+
 
   return (
     <div className="space-y-8">
@@ -163,7 +187,18 @@ export default function SchedulesPage() {
       
        <Card>
         <CardHeader>
-            <CardTitle>Filtros Avançados</CardTitle>
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle>Detalhes da Escala</CardTitle>
+                <CardDescription>Filtre, visualize e edite as atribuições abaixo.</CardDescription>
+              </div>
+              {selectedMonthSchedules.length > 0 && (
+                <Button variant="destructive" size="sm" onClick={() => handleDeleteClick(selectedMonthSchedules[0])}>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Excluir Escala do Mês
+                </Button>
+              )}
+            </div>
             <div className="flex flex-col md:flex-row gap-4 mt-4">
                <div className="relative w-full md:flex-1">
                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -229,12 +264,13 @@ export default function SchedulesPage() {
               </TableHeader>
               <TableBody>
                 {filteredAssignments.length > 0 ? (
-                  filteredAssignments.map((assignment, index) => {
-                    const availableVolunteers = volunteers.filter(v => v.areas.includes(assignment.area) && v.name !== assignment.voluntario_alocado);
-                    const assignmentIdentifier = `${assignment.evento}-${assignment.area}-${assignment.voluntario_alocado}`;
+                  filteredAssignments.map((assignment) => {
+                    const availableVolunteers = volunteers.filter(v => v.areas.includes(assignment.area)).sort((a,b) => a.name.localeCompare(b.name));
+                    // A unique identifier for the specific assignment slot within a day
+                    const assignmentIdentifier = `${assignment.evento}-${assignment.area}-${assignment.voluntario_alocado}-${assignment.assignmentIndex}`;
                     return(
-                    <TableRow key={`${assignment.fullDate}-${assignment.evento}-${assignment.area}-${index}`}>
-                      <TableCell>{new Date(assignment.fullDate + 'T00:00:00').toLocaleDateString('pt-BR')}</TableCell>
+                    <TableRow key={`${assignment.fullDate}-${assignmentIdentifier}`}>
+                      <TableCell>{new Date(assignment.fullDate + 'T00:00:00').toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</TableCell>
                       <TableCell>{assignment.dayOfWeek}</TableCell>
                       <TableCell>{assignment.evento}</TableCell>
                       <TableCell>{assignment.area}</TableCell>
@@ -242,28 +278,32 @@ export default function SchedulesPage() {
                         {assignment.equipe && <Badge variant="secondary">{assignment.equipe}</Badge>}
                       </TableCell>
                       <TableCell>
-                        {assignment.voluntario_alocado ? (
-                           <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-auto p-1 text-left font-normal -ml-2">
-                                {assignment.voluntario_alocado}
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start">
-                              {availableVolunteers.length > 0 ? (
-                                availableVolunteers.map(v => (
-                                  <DropdownMenuItem key={v.id} onClick={() => handleAssignmentChange(assignment.scheduleId, assignment.fullDate, assignmentIdentifier, v.id)}>
-                                    {v.name}
-                                  </DropdownMenuItem>
-                                ))
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                             <Button variant="ghost" className="h-auto p-1 text-left font-normal -ml-2 w-full justify-start">
+                              {assignment.voluntario_alocado ? (
+                                  <span>{assignment.voluntario_alocado}</span>
                               ) : (
-                                <DropdownMenuItem disabled>Nenhum outro voluntário disponível</DropdownMenuItem>
+                                  <span className="text-muted-foreground italic">{assignment.motivo || 'Atribuir...'}</span>
                               )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        ) : (
-                          <span className="text-muted-foreground italic">{assignment.motivo || '-'}</span>
-                        )}
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start">
+                            {availableVolunteers.length > 0 ? (
+                              availableVolunteers.map(v => (
+                                <DropdownMenuItem 
+                                    key={v.id} 
+                                    onClick={() => handleAssignmentChange(assignment.scheduleId, assignment.fullDate, assignmentIdentifier, v.id)}
+                                    disabled={v.name === assignment.voluntario_alocado}
+                                >
+                                  {v.name}
+                                </DropdownMenuItem>
+                              ))
+                            ) : (
+                              <DropdownMenuItem disabled>Nenhum voluntário para esta área</DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                       <TableCell>
                          <Badge variant={assignment.status === 'Preenchida' ? 'default' : 'destructive'}>
@@ -275,7 +315,7 @@ export default function SchedulesPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={7} className="h-24 text-center">
-                      Nenhum agendamento encontrado para os filtros aplicados.
+                       {selectedMonthSchedules.length > 0 ? "Nenhum agendamento encontrado para os filtros aplicados." : "Nenhuma escala salva encontrada para este mês e ano."}
                     </TableCell>
                   </TableRow>
                 )}
@@ -284,6 +324,23 @@ export default function SchedulesPage() {
           </div>
         </CardContent>
       </Card>
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. Isso excluirá permanentemente a escala de {' '}
+              {scheduleToDelete ? `${months.find(m => m.value === String(scheduleToDelete.month))?.label} de ${scheduleToDelete.year}` : 'selecionada'}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90">
+              Excluir Permanentemente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

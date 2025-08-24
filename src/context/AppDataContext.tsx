@@ -39,6 +39,8 @@ interface AppDataContextType {
   generateTeamSchedules: (year: number, month: number, startTeam: string) => void;
   setSavedSchedules: React.Dispatch<React.SetStateAction<SavedSchedule[]>>;
   saveSchedule: (schedule: SavedSchedule) => void;
+  updateSavedSchedule: (id: string, updatedSchedule: SavedSchedule) => void;
+  deleteSchedule: (id: string) => void;
 }
 
 const AppDataContext = createContext<AppDataContextType | undefined>(undefined);
@@ -85,11 +87,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     const startDate = startOfMonth(new Date(year, month - 1));
     const endDate = endOfMonth(new Date(year, month - 1));
     
-    // Using `eachWeekOfInterval` with Monday as the start of the week
     const weeks = eachWeekOfInterval({ start: startDate, end: endDate }, { weekStartsOn: 1 });
 
     let teamIndex = teams.findIndex(t => t.name === startTeam);
-    if (teamIndex === -1) teamIndex = 0; // fallback to first team
+    if (teamIndex === -1) teamIndex = 0;
 
     weeks.forEach(weekStart => {
         const weekEnd = addDays(weekStart, 6);
@@ -109,7 +110,23 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   
   // Saved Schedule Actions
   const saveSchedule = (schedule: SavedSchedule) => {
-    setSavedSchedules(prev => [...prev, schedule]);
+    setSavedSchedules(prev => {
+        const existingIndex = prev.findIndex(s => s.year === schedule.year && s.month === schedule.month);
+        if (existingIndex > -1) {
+            const newSchedules = [...prev];
+            newSchedules[existingIndex] = schedule;
+            return newSchedules;
+        }
+        return [...prev, schedule];
+    });
+  };
+  
+  const updateSavedSchedule = (id: string, updatedSchedule: SavedSchedule) => {
+    setSavedSchedules(prev => prev.map(s => s.id === id ? updatedSchedule : s));
+  };
+  
+  const deleteSchedule = (id: string) => {
+      setSavedSchedules(prev => prev.filter(s => s.id !== id));
   };
 
 
@@ -119,7 +136,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     teams, setTeams, addTeam, updateTeam, deleteTeam,
     areasOfService, setAreasOfService, addArea, updateArea, deleteArea,
     teamSchedules, setTeamSchedules, generateTeamSchedules,
-    savedSchedules, setSavedSchedules, saveSchedule,
+    savedSchedules, setSavedSchedules, saveSchedule, updateSavedSchedule, deleteSchedule,
   };
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;
