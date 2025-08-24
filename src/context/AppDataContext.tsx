@@ -10,6 +10,7 @@ import {
     teamSchedules as initialTeamSchedules,
     savedSchedules as initialSavedSchedules
 } from '@/lib/data';
+import { startOfMonth, endOfMonth, eachWeekOfInterval, format, addDays, subDays } from 'date-fns';
 
 interface AppDataContextType {
   volunteers: Volunteer[];
@@ -35,6 +36,7 @@ interface AppDataContextType {
   updateArea: (name: string, updatedArea: AreaOfService) => void;
   deleteArea: (name: string) => void;
   setTeamSchedules: React.Dispatch<React.SetStateAction<TeamSchedule[]>>;
+  generateTeamSchedules: (year: number, month: number, startTeam: string) => void;
   setSavedSchedules: React.Dispatch<React.SetStateAction<SavedSchedule[]>>;
 }
 
@@ -75,13 +77,42 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setAreasOfService(prev => prev.map(a => a.name === name ? updatedArea : a).sort((a,b) => a.name.localeCompare(b.name)));
   };
   const deleteArea = (name: string) => setAreasOfService(prev => prev.filter(a => a.name !== name));
+  
+  // Team Schedule Actions
+  const generateTeamSchedules = (year: number, month: number, startTeam: string) => {
+    const newSchedules: TeamSchedule[] = [];
+    const startDate = startOfMonth(new Date(year, month - 1));
+    const endDate = endOfMonth(new Date(year, month -1));
+    
+    const weeks = eachWeekOfInterval({ start: startDate, end: endDate }, { weekStartsOn: 1 /* Monday */ });
+
+    let teamIndex = teams.findIndex(t => t.name === startTeam);
+    if (teamIndex === -1) teamIndex = 0; // fallback to first team
+
+    weeks.forEach(weekStart => {
+        const weekEnd = addDays(weekStart, 6);
+        const team = teams[teamIndex % teams.length];
+        
+        newSchedules.push({
+            team: team.name,
+            // Uses Monday of the week as start, and Sunday as end
+            startDate: format(weekStart, 'yyyy-MM-dd'),
+            endDate: format(weekEnd, 'yyyy-MM-dd'),
+        });
+        
+        teamIndex++;
+    });
+
+    setTeamSchedules(newSchedules);
+  };
+
 
   const value = {
     volunteers, setVolunteers, addVolunteer, updateVolunteer, deleteVolunteer,
     events, setEvents, addEvent, updateEvent, deleteEvent,
     teams, setTeams, addTeam, updateTeam, deleteTeam,
     areasOfService, setAreasOfService, addArea, updateArea, deleteArea,
-    teamSchedules, setTeamSchedules,
+    teamSchedules, setTeamSchedules, generateTeamSchedules,
     savedSchedules, setSavedSchedules
   };
 
