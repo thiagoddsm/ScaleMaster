@@ -97,6 +97,9 @@ export const events: Event[] = [
     areas: [
       { name: 'Som', volunteersNeeded: 1 },
       { name: 'Projeção', volunteersNeeded: 1 },
+      { name: 'Staff', volunteersNeeded: 1 },
+      { name: 'Coordenação De Culto', volunteersNeeded: 1 },
+      { name: 'Fotografia', volunteersNeeded: 1 },
     ],
   },
   {
