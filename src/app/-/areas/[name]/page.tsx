@@ -22,7 +22,14 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAppData } from '@/context/AppDataContext';
+import { areasOfService } from '@/lib/data';
 
+
+export async function generateStaticParams() {
+  return areasOfService.map((area) => ({
+    name: encodeURIComponent(area.name),
+  }))
+}
 
 const volunteerSchema = z.object({
   id: z.string().optional(),
