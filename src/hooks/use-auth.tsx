@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, User, signOut as firebaseSignOut } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, User, signOut as firebaseSignOut, AuthError } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 
@@ -34,7 +34,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await signInWithPopup(auth, provider);
       router.push('/app/dashboard');
     } catch (error) {
-      console.error("Error signing in with Google: ", error);
+        const authError = error as AuthError;
+        // Don't log an error if the user cancels the popup
+        if (authError.code !== 'auth/cancelled-popup-request') {
+             console.error("Error signing in with Google: ", error);
+        }
     }
   };
 
