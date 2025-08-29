@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { cn } from '@/lib/utils';
 import { AuthProvider } from '@/hooks/use-auth';
+import { AppDataProvider } from '@/context/AppDataContext';
 
 export const metadata: Metadata = {
   title: 'ScaleMaster',
@@ -23,7 +24,9 @@ export default function RootLayout({
       </head>
       <body className={cn("font-body antialiased min-h-screen bg-background text-foreground")}>
           <AuthProvider>
-            {children}
+            <AppDataProvider>
+              {children}
+            </AppDataProvider>
           </AuthProvider>
           <Toaster />
       </body>
