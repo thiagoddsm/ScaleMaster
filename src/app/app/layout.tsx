@@ -3,12 +3,11 @@
 import * as React from "react"
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Blocks, Calendar, LayoutDashboard, Users, Construction, Shield, LogOut, Cog, Bot, Archive, CalendarDays } from 'lucide-react';
-import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger, SidebarInset, SidebarGroup, SidebarGroupLabel, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem } from '@/components/ui/sidebar';
+import { Blocks, Calendar, LayoutDashboard, Users, Construction, Shield, LogOut, Cog, Bot, UploadCloud } from 'lucide-react';
+import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger, SidebarInset, Collapsible, CollapsibleContent, CollapsibleTrigger, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem } from '@/components/ui/sidebar';
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const menuItems = [
   { href: '/app/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -115,6 +114,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     </SidebarMenuSub>
                 </CollapsibleContent>
                </Collapsible>
+               <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname === '/app/import'}
+                    tooltip={{
+                      children: "Importar Dados",
+                      className: "bg-primary text-primary-foreground",
+                    }}
+                  >
+                    <Link href="/app/import">
+                      <UploadCloud />
+                      <span>Importar Dados</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
             </SidebarMenu>
             <SidebarMenu>
               {bottomMenuItems.map((item) => (
