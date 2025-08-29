@@ -10,28 +10,32 @@ import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const menuItems = [
-  { href: '/app/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/app/volunteers', label: 'Voluntários', icon: Users },
-  { href: '/app/events', label: 'Eventos', icon: Calendar },
-  { href: '/app/areas', label: 'Áreas de Serviço', icon: Construction },
-  { href: '/app/teams', label: 'Equipes', icon: Shield },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/volunteers', label: 'Voluntários', icon: Users },
+  { href: '/events', label: 'Eventos', icon: Calendar },
+  { href: '/areas', label: 'Áreas de Serviço', icon: Construction },
+  { href: '/teams', label: 'Equipes', icon: Shield },
 ];
 
 const bottomMenuItems = [
-    { href: '/app/settings', label: 'Configurações', icon: Cog },
+    { href: '/settings', label: 'Configurações', icon: Cog },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, loading, signOut } = useAuth();
-  const [isSchedulesOpen, setIsSchedulesOpen] = React.useState(pathname.startsWith('/app/schedules'));
+  const [isSchedulesOpen, setIsSchedulesOpen] = React.useState(pathname.startsWith('/schedules'));
+  
+  if (pathname === '/auth/login') {
+    return <>{children}</>;
+  }
 
   React.useEffect(() => {
     if (!loading && !user) {
       router.push('/auth/login');
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, pathname]);
   
   const handleSignOut = async () => {
     await signOut();
@@ -83,7 +87,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton
-                      isActive={pathname.startsWith('/app/schedules')}
+                      isActive={pathname.startsWith('/schedules')}
                       tooltip={{
                         children: "Escalas",
                         className: "bg-primary text-primary-foreground",
@@ -97,18 +101,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <CollapsibleContent>
                     <SidebarMenuSub>
                         <SidebarMenuSubItem>
-                             <SidebarMenuSubButton asChild isActive={pathname === '/app/schedules/generate'}>
-                                <Link href="/app/schedules/generate">Gerar Escala</Link>
+                             <SidebarMenuSubButton asChild isActive={pathname === '/schedules/generate'}>
+                                <Link href="/schedules/generate">Gerar Escala</Link>
                             </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                         <SidebarMenuSubItem>
-                             <SidebarMenuSubButton asChild isActive={pathname === '/app/schedules'}>
-                                <Link href="/app/schedules">Escalas Salvas</Link>
+                             <SidebarMenuSubButton asChild isActive={pathname === '/schedules'}>
+                                <Link href="/schedules">Escalas Salvas</Link>
                             </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                          <SidebarMenuSubItem>
-                             <SidebarMenuSubButton asChild isActive={pathname === '/app/schedules/calendar'}>
-                                <Link href="/app/schedules/calendar">Calendário de Equipes</Link>
+                             <SidebarMenuSubButton asChild isActive={pathname === '/schedules/calendar'}>
+                                <Link href="/schedules/calendar">Calendário de Equipes</Link>
                             </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                     </SidebarMenuSub>
@@ -117,13 +121,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                <SidebarMenuItem>
                   <SidebarMenuButton
                     asChild
-                    isActive={pathname === '/app/import'}
+                    isActive={pathname === '/import'}
                     tooltip={{
                       children: "Importar Dados",
                       className: "bg-primary text-primary-foreground",
                     }}
                   >
-                    <Link href="/app/import">
+                    <Link href="/import">
                       <UploadCloud />
                       <span>Importar Dados</span>
                     </Link>
