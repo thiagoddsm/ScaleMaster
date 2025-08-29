@@ -194,98 +194,100 @@ export default function VolunteersPage() {
             </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Equipe</TableHead>
-                <TableHead>Áreas de Serviço</TableHead>
-                <TableHead>Disponibilidade</TableHead>
-                <TableHead>Contato</TableHead>
-                <TableHead className="w-20 text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-40" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-40" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                    <TableCell className="text-right"><Skeleton className="h-8 w-8" /></TableCell>
-                  </TableRow>
-                ))
-              ) : filteredVolunteers.length > 0 ? filteredVolunteers.map((volunteer) => (
-                <TableRow key={volunteer.id}>
-                  <TableCell className="font-medium">{volunteer.name}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-auto p-1 text-left font-normal -ml-2">
-                          <Badge variant={volunteer.team === 'N/A' ? 'outline' : 'default'} className="cursor-pointer">
-                            {volunteer.team}
-                          </Badge>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start">
-                        {allTeams.map(teamName => (
-                           <DropdownMenuItem 
-                              key={teamName} 
-                              onClick={() => handleTeamChange(volunteer.id, teamName)}
-                              disabled={volunteer.team === teamName}
-                            >
-                            {teamName}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1 max-w-xs">
-                      {volunteer.areas.map(area => <Badge key={area} variant="secondary">{area}</Badge>)}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1 max-w-xs">
-                      {volunteer.availability.map(avail => <Badge key={avail} variant="outline">{avail}</Badge>)}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm">
-                      <div>{volunteer.email}</div>
-                      <div>{volunteer.phone}</div>
-                    </div>
-                  </TableCell>
-                   <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Abrir menu</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEdit(volunteer)}>
-                           <Edit className="mr-2 h-4 w-4" /> Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDelete(volunteer)} className="text-destructive">
-                           <Trash2 className="mr-2 h-4 w-4" /> Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              )) : (
+          <div className="border rounded-md">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
-                    Nenhum voluntário encontrado.
-                  </TableCell>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Equipe</TableHead>
+                  <TableHead>Áreas de Serviço</TableHead>
+                  <TableHead>Disponibilidade</TableHead>
+                  <TableHead>Contato</TableHead>
+                  <TableHead className="w-20 text-right">Ações</TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                      <TableCell className="text-right"><Skeleton className="h-8 w-8" /></TableCell>
+                    </TableRow>
+                  ))
+                ) : filteredVolunteers.length > 0 ? filteredVolunteers.map((volunteer) => (
+                  <TableRow key={volunteer.id}>
+                    <TableCell className="font-medium">{volunteer.name}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-auto p-1 text-left font-normal -ml-2">
+                            <Badge variant={volunteer.team === 'N/A' ? 'outline' : 'default'} className="cursor-pointer">
+                              {volunteer.team}
+                            </Badge>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                          {allTeams.map(teamName => (
+                             <DropdownMenuItem 
+                                key={teamName} 
+                                onClick={() => handleTeamChange(volunteer.id, teamName)}
+                                disabled={volunteer.team === teamName}
+                              >
+                              {teamName}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1 max-w-xs">
+                        {volunteer.areas.map(area => <Badge key={area} variant="secondary">{area}</Badge>)}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1 max-w-xs">
+                        {volunteer.availability.map(avail => <Badge key={avail} variant="outline">{avail}</Badge>)}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">
+                        <div>{volunteer.email}</div>
+                        <div>{volunteer.phone}</div>
+                      </div>
+                    </TableCell>
+                     <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Abrir menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleEdit(volunteer)}>
+                             <Edit className="mr-2 h-4 w-4" /> Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDelete(volunteer)} className="text-destructive">
+                             <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                )) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center">
+                      Nenhum voluntário encontrado.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 

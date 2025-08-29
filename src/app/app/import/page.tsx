@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { useAppData } from '@/context/AppDataContext';
 import { Loader2, UploadCloud } from 'lucide-react';
-import { collection, writeBatch, getDocs, query, where } from 'firebase/firestore';
+import { collection, writeBatch, getDocs, query, where, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Volunteer } from '@/lib/types';
 import { Progress } from '@/components/ui/progress';
@@ -121,7 +121,7 @@ ELIZETE AZEVEDO DA SILVA MARTINS,MUSIKIDS,(21)97179-8359,elizete.dayfels@gmail.c
 ELOISA SILVA BATISTA,EQUIPE AZUL,,eloisasiilva47@gmail.com
 EMMANOEL DA SILVA ABREU,FOTOGRAFIA,(21)99253-7000,emmanoel2015@gmail.com
 ERICK DA COSTA MONTEIRO,"CLEANING,EQUIPE VERMELHA",(21)99909-0607,erickcostamonteiro@gmail.com
-ERIKA SANTOS COUTO RAINHA,EQUIPE VERDE,(21)99351-4706,erika andrade50@yahoo.com.br
+ERIKA SANTOS COUTO RAINha,EQUIPE VERDE,(21)99351-4706,erika andrade50@yahoo.com.br
 ESTEPHANY DE OLIVEIRA MONTEIRO,RECEPÇÃO,(21)99025-6833,estephanyo16@gmail.com
 ESTHER ALVES DA SILVA,"EQUIPE VERMELHA,EQUIPE AMARELA",(21)97539-8012,alvesesther04@gmail.com
 EUGENIO COSTA CABRAL,FOTOGRAFIA,(21)98120-0396,eugeniocostacabral@hotmail.com
@@ -404,48 +404,55 @@ WELSON PINHEIRO,,(21)99448-4720,ti co34@hotmail.com
 WILSON MICHAEL GOUDARD MONTEIRO,APOIO,(21)98581-3881,michaelgoudard@outlook.com
 YASMIM CALAZANS PEREIRA DE QUEIROZ,STAFF,(21)97751-1689,ycalazanspereira@gmail.com
 YASMIM SANT'ANNA LIMA,RECEPÇÃO,(21)98445-1779,yasmimsantanna64@gmail.com
-YOLANDA NICOLE DE OLIVEIRA SOUZA,"ESPAÇO VIP,EQUIPE AZUL",(21)99686-7388,nicoleesouzaal@gmail.com`;
+YOLANDA NICOLE DE OLIVEIRA SOUZA,"ESPAÇO VIP,EQUIPE AZUL",(21)99686-7388,nicoleesouzaal@gmail.com
+`;
 
-function parseAndStructureData(csv: string): VolunteerToImport[] {
-    const teamMapping: { [key: string]: string } = {
-        'EQUIPE AMARELA': 'Amarela',
-        'EQUIPE AZUL': 'Azul',
-        'EQUIPE VERDE': 'Verde',
-        'EQUIPE VERMELHA': 'Vermelha'
-    };
+const teamMapping: { [key: string]: string } = {
+    'EQUIPE AMARELA': 'Amarela',
+    'EQUIPE AZUL': 'Azul',
+    'EQUIPE VERDE': 'Verde',
+    'EQUIPE VERMELHA': 'Vermelha'
+};
 
+function parseLine(line: string) {
+    const columns = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(col => col.replace(/"/g, '').trim());
+    return columns;
+}
+
+function processCsvData(csv: string) {
     const lines = csv.trim().split('\n').slice(1);
     const structuredData: { [name: string]: VolunteerToImport } = {};
 
     lines.forEach(line => {
-        // Handle commas within quoted fields
-        const columns = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(col => col.replace(/"/g, '').trim());
-        const [name, ministry, phone, email] = columns;
-
+        const [name, ministry, phone, email] = parseLine(line);
         if (!name) return;
 
         let team: string | null = null;
         const areas = (ministry || '')
             .split(',')
             .map(m => m.trim().toUpperCase())
-            .filter(m => {
-                if (teamMapping[m]) {
-                    team = teamMapping[m];
-                    return false; // This is a team, not an area
+            .map(m => {
+                const teamName = Object.keys(teamMapping).find(key => m.includes(key));
+                if (teamName) {
+                    team = teamMapping[teamName];
+                    return m.replace(teamName, '').trim();
                 }
-                return m.length > 0; // This is an area
-            });
+                return m;
+            })
+            .map(m => {
+                const formattedArea = m.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+                return formattedArea;
+            })
+            .filter(m => m.length > 0 && !teamMapping[m.toUpperCase() as keyof typeof teamMapping]);
             
         const formattedName = name.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
 
         if (structuredData[formattedName]) {
-            // Merge areas if volunteer already exists
             structuredData[formattedName].areas = [...new Set([...structuredData[formattedName].areas, ...areas])];
             if (team && !structuredData[formattedName].team) {
                  structuredData[formattedName].team = team;
             }
         } else {
-            // Create new entry
             structuredData[formattedName] = {
                 name: formattedName,
                 team: team,
@@ -456,21 +463,21 @@ function parseAndStructureData(csv: string): VolunteerToImport[] {
             };
         }
     });
-    
-    // Assign default team if none found
+
     Object.values(structuredData).forEach(volunteer => {
         if (!volunteer.team) {
             volunteer.team = 'N/A';
         }
     });
-
+    
+    console.log(Object.values(structuredData));
     return Object.values(structuredData);
 }
 
-const volunteersToImport = parseAndStructureData(csvData);
+const volunteersToImport = processCsvData(csvData);
 
 export default function ImportPage() {
-    const { addVolunteer, volunteers } = useAppData();
+    const { addVolunteer, volunteers, areasOfService, addArea } = useAppData();
     const { toast } = useToast();
     const [isImporting, startImportTransition] = useTransition();
     const [progress, setProgress] = useState(0);
@@ -478,23 +485,32 @@ export default function ImportPage() {
 
     const handleImport = () => {
         startImportTransition(async () => {
-            const volunteersCollection = collection(db, 'volunteers');
-            const batch = writeBatch(db);
             let importedCount = 0;
             let skippedCount = 0;
+            let newAreasCount = 0;
+            
+            const existingAreaNames = areasOfService.map(a => a.name.toLowerCase());
             
             setImportLog(['Iniciando importação...']);
 
             for (let i = 0; i < volunteersToImport.length; i++) {
                 const volunteerData = volunteersToImport[i];
                 
-                // Check if volunteer already exists by name
-                const q = query(volunteersCollection, where("name", "==", volunteerData.name));
-                const querySnapshot = await getDocs(q);
+                // Check for new areas and add them
+                for (const areaName of volunteerData.areas) {
+                    if (areaName && !existingAreaNames.includes(areaName.toLowerCase())) {
+                        addArea({ name: areaName });
+                        existingAreaNames.push(areaName.toLowerCase());
+                        newAreasCount++;
+                        setImportLog(prev => [...prev, `[NOVA ÁREA] '${areaName}' criada.`]);
+                    }
+                }
 
-                if (querySnapshot.empty) {
-                    const volunteerDocRef = doc(volunteersCollection);
-                    batch.set(volunteerDocRef, volunteerData);
+                // Check if volunteer already exists by name
+                const volunteerExists = volunteers.some(v => v.name.toLowerCase() === volunteerData.name.toLowerCase());
+
+                if (!volunteerExists) {
+                    await addVolunteer(volunteerData);
                     importedCount++;
                     setImportLog(prev => [...prev, `[CRIADO] ${volunteerData.name}`]);
                 } else {
@@ -503,23 +519,13 @@ export default function ImportPage() {
                 }
 
                 setProgress(((i + 1) / volunteersToImport.length) * 100);
-
-                // Commit batch every 500 writes
-                if ((i + 1) % 500 === 0) {
-                    await batch.commit();
-                    // Re-initialize batch after commit
-                    // batch = writeBatch(db); 
-                    // this line is commented as it's not available on the user-provided context
-                }
             }
-
-            // Commit any remaining writes
-            await batch.commit();
 
             toast({
                 title: 'Importação Concluída!',
-                description: `${importedCount} voluntários cadastrados, ${skippedCount} ignorados.`,
+                description: `${importedCount} voluntários cadastrados, ${skippedCount} ignorados, ${newAreasCount} novas áreas criadas.`,
                 className: "bg-primary text-primary-foreground",
+                duration: 5000,
             });
              setImportLog(prev => [...prev, `\nConcluído! ${importedCount} voluntários cadastrados, ${skippedCount} ignorados.`]);
         });
@@ -534,11 +540,11 @@ export default function ImportPage() {
                     <CardTitle>Importar Voluntários</CardTitle>
                     <CardDescription>
                        Clique no botão para cadastrar em massa a lista de voluntários no banco de dados.
-                       Voluntários com o mesmo nome não serão duplicados.
+                       Voluntários com o mesmo nome não serão duplicados. Novas áreas de serviço encontradas serão criadas automaticamente.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col items-start gap-4">
-                     <Button onClick={handleImport} disabled={isImporting || !showImportButton} variant="default" size="lg">
+                     <Button onClick={handleImport} disabled={isImporting} variant="default" size="lg">
                         {isImporting ? (
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         ) : (
@@ -546,7 +552,7 @@ export default function ImportPage() {
                         )}
                         Importar {volunteersToImport.length} Voluntários
                       </Button>
-                      {!showImportButton && !isImporting && (
+                      {!showImportButton && !isImporting && volunteers.length > 0 && (
                         <p className="text-sm text-green-600 font-medium">Todos os voluntários já foram importados.</p>
                       )}
                       {isImporting && (
