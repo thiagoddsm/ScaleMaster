@@ -37,31 +37,7 @@ export const teams: Team[] = [
 ];
 
 export const volunteers: Volunteer[] = [
-  { id: '1', name: 'Lucas Cunha', team: 'Alpha', areas: ['Som'], availability: ['Culto da Família'] },
-  { id: '2', name: 'Marcelo Daniel', team: 'Bravo', areas: ['Som'], availability: ['Culto da Família'] },
-  { id: '3', name: 'Ramon Abdias', team: 'Charlie', areas: ['Som'], availability: ['Culto da Família'] },
-  { id: '4', name: 'Sérgio Ricardo', team: 'Delta', areas: ['Som'], availability: ['Culto da Família'] },
-  { id: '5', name: 'Ana Cristina Leal', team: 'Alpha', areas: ['Som'], availability: ['Culto da Família'] },
-  { id: '6', name: 'Carlos Borges Junior', team: 'Bravo', areas: ['Som'], availability: ['Culto da Família'] },
-  { id: '7', name: 'Daniele Sota', team: 'Charlie', areas: ['Som'], availability: ['Culto da Família'] },
-  { id: '8', name: 'Gisele Rocha', team: 'Delta', areas: ['Som'], availability: ['Culto da Família'] },
-  { id: '9', name: 'Andressa Roza', team: 'Alpha', areas: ['Som'], availability: ['Culto da Família'] },
-  { id: '10', name: 'Filipe Sant\'Anna', team: 'Bravo', areas: ['Som'], availability: ['Culto da Família'] },
-  { id: '11', name: 'Isabelle Nunes', team: 'Charlie', areas: ['Som'], availability: ['Culto da Família'] },
-  { id: '12', name: 'Raphael Roza', team: 'Delta', areas: ['Som'], availability: ['Culto da Família'] },
-  // New Volunteers
-  { id: '13', name: 'Juliana Paes', team: 'Alpha', areas: ['Projeção'], availability: ['Culto da Família'] },
-  { id: '14', name: 'Marcos Freitas', team: 'Bravo', areas: ['Projeção'], availability: ['Culto da Família'] },
-  { id: '15', name: 'Beatriz Almeida', team: 'Charlie', areas: ['Projeção'], availability: ['Culto da Família'] },
-  { id: '16', name: 'Leandro Castro', team: 'Delta', areas: ['Projeção'], availability: ['Culto da Família'] },
-  { id: '17', name: 'Fernanda Lima', team: 'Alpha', areas: ['Projeção'], availability: ['Culto da Família'] },
-  { id: '18', name: 'Gustavo Ribeiro', team: 'Bravo', areas: ['Projeção'], availability: ['Culto da Família'] },
-  { id: '19', name: 'Patrícia Souza', team: 'Charlie', areas: ['Projeção'], availability: ['Culto da Família'] },
-  { id: '20', name: 'Ricardo Oliveira', team: 'Delta', areas: ['Projeção'], availability: ['Culto da Família'] },
-  { id: '21', name: 'Camila Santos', team: 'Alpha', areas: ['Projeção'], availability: ['Culto da Família'] },
-  { id: '22', name: 'Rodrigo Pereira', team: 'Bravo', areas: ['Projeção'], availability: ['Culto da Família'] },
-  { id: '23', name: 'Amanda Costa', team: 'Charlie', areas: ['Projeção'], availability: ['Culto da Família'] },
-  { id: '24', name: 'Vinicius Ferreira', team: 'Delta', areas: ['Projeção'], availability: ['Culto da Família'] },
+  // This data is now fetched from Firestore.
 ];
 
 export const events: Event[] = [

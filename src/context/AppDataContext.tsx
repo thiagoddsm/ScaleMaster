@@ -1,9 +1,10 @@
 "use client"
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { collection, onSnapshot, doc, addDoc, updateDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import type { Volunteer, Event, Team, AreaOfService, TeamSchedule, SavedSchedule } from '@/lib/types';
 import { 
-    volunteers as initialVolunteers,
     events as initialEvents,
     teams as initialTeams,
     areasOfService as initialAreas,
@@ -11,6 +12,7 @@ import {
     savedSchedules as initialSavedSchedules
 } from '@/lib/data';
 import { startOfMonth, endOfMonth, eachWeekOfInterval, format, addDays } from 'date-fns';
+import { useAuth } from '@/hooks/use-auth';
 
 interface AppDataContextType {
   volunteers: Volunteer[];
@@ -19,10 +21,10 @@ interface AppDataContextType {
   areasOfService: AreaOfService[];
   teamSchedules: TeamSchedule[];
   savedSchedules: SavedSchedule[];
-  setVolunteers: React.Dispatch<React.SetStateAction<Volunteer[]>>;
-  addVolunteer: (volunteer: Volunteer) => void;
-  updateVolunteer: (id: string, updatedVolunteer: Volunteer) => void;
-  deleteVolunteer: (id: string) => void;
+  loading: boolean;
+  addVolunteer: (volunteer: Omit<Volunteer, 'id'>) => Promise<void>;
+  updateVolunteer: (id: string, updatedVolunteer: Partial<Volunteer>) => Promise<void>;
+  deleteVolunteer: (id: string) => Promise<void>;
   setEvents: React.Dispatch<React.SetStateAction<Event[]>>;
   addEvent: (event: Event) => void;
   updateEvent: (id: string, updatedEvent: Event) => void;
@@ -46,19 +48,55 @@ interface AppDataContextType {
 const AppDataContext = createContext<AppDataContextType | undefined>(undefined);
 
 export function AppDataProvider({ children }: { children: ReactNode }) {
-  const [volunteers, setVolunteers] = useState<Volunteer[]>(initialVolunteers);
+  const { user } = useAuth();
+  const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
   const [events, setEvents] = useState<Event[]>(initialEvents);
   const [teams, setTeams] = useState<Team[]>(initialTeams);
   const [areasOfService, setAreasOfService] = useState<AreaOfService[]>(initialAreas);
   const [teamSchedules, setTeamSchedules] = useState<TeamSchedule[]>(initialTeamSchedules);
   const [savedSchedules, setSavedSchedules] = useState<SavedSchedule[]>(initialSavedSchedules);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) {
+      setVolunteers([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    const volunteersCollection = collection(db, 'volunteers');
+    const q = query(volunteersCollection, orderBy("name"));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const volunteersData = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Volunteer));
+      setVolunteers(volunteersData);
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching volunteers:", error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
 
   // Volunteer Actions
-  const addVolunteer = (volunteer: Volunteer) => setVolunteers(prev => [...prev, volunteer]);
-  const updateVolunteer = (id: string, updatedVolunteer: Volunteer) => {
-    setVolunteers(prev => prev.map(v => v.id === id ? updatedVolunteer : v));
+  const addVolunteer = async (volunteer: Omit<Volunteer, 'id'>) => {
+    try {
+      await addDoc(collection(db, 'volunteers'), volunteer);
+    } catch (e) {
+      console.error("Error adding document: ", e);
+    }
   };
-  const deleteVolunteer = (id: string) => setVolunteers(prev => prev.filter(v => v.id !== id));
+  const updateVolunteer = async (id: string, updatedVolunteer: Partial<Volunteer>) => {
+    const volunteerDoc = doc(db, 'volunteers', id);
+    await updateDoc(volunteerDoc, updatedVolunteer);
+  };
+  const deleteVolunteer = async (id: string) => {
+    await deleteDoc(doc(db, 'volunteers', id));
+  };
+
 
   // Event Actions
   const addEvent = (event: Event) => setEvents(prev => [...prev, event]);
@@ -134,7 +172,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
 
   const value = {
-    volunteers, setVolunteers, addVolunteer, updateVolunteer, deleteVolunteer,
+    volunteers, loading, addVolunteer, updateVolunteer, deleteVolunteer,
     events, setEvents, addEvent, updateEvent, deleteEvent,
     teams, setTeams, addTeam, updateTeam, deleteTeam,
     areasOfService, setAreasOfService, addArea, updateArea, deleteArea,

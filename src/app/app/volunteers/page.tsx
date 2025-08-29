@@ -19,6 +19,7 @@ import type { Volunteer } from '@/lib/types';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAppData } from '@/context/AppDataContext';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const volunteerSchema = z.object({
   id: z.string().optional(),
@@ -31,7 +32,7 @@ const volunteerSchema = z.object({
 });
 
 export default function VolunteersPage() {
-  const { volunteers, teams, areasOfService, events, updateVolunteer, addVolunteer, deleteVolunteer } = useAppData();
+  const { volunteers, teams, areasOfService, events, updateVolunteer, addVolunteer, deleteVolunteer, loading } = useAppData();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
@@ -92,9 +93,18 @@ export default function VolunteersPage() {
 
 
   function onSubmit(data: z.infer<typeof volunteerSchema>) {
+    const volunteerData = {
+        name: data.name,
+        team: data.team,
+        areas: data.areas,
+        availability: data.availability,
+        phone: data.phone,
+        email: data.email,
+    };
+
     if (selectedVolunteer) {
         // Edit
-        updateVolunteer(selectedVolunteer.id, { ...selectedVolunteer, ...data });
+        updateVolunteer(selectedVolunteer.id, volunteerData);
         toast({
             title: "Sucesso!",
             description: "Voluntário atualizado.",
@@ -102,7 +112,7 @@ export default function VolunteersPage() {
         });
     } else {
         // Add
-        addVolunteer({ ...data, id: `v_${new Date().getTime()}`});
+        addVolunteer(volunteerData);
         toast({
             title: "Sucesso!",
             description: "Novo voluntário adicionado.",
@@ -121,7 +131,7 @@ export default function VolunteersPage() {
     const areaMatch = areaFilter === 'all' || volunteer.areas.includes(areaFilter);
     const availabilityMatch = availabilityFilter === 'all' || volunteer.availability.includes(availabilityFilter);
     return nameMatch && teamMatch && areaMatch && availabilityMatch;
-  }).sort((a, b) => a.name.localeCompare(b.name));
+  });
   
   return (
     <div className="space-y-8">
@@ -197,7 +207,18 @@ export default function VolunteersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredVolunteers.length > 0 ? filteredVolunteers.map((volunteer) => (
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                    <TableCell className="text-right"><Skeleton className="h-8 w-8" /></TableCell>
+                  </TableRow>
+                ))
+              ) : filteredVolunteers.length > 0 ? filteredVolunteers.map((volunteer) => (
                 <TableRow key={volunteer.id}>
                   <TableCell className="font-medium">{volunteer.name}</TableCell>
                   <TableCell>
