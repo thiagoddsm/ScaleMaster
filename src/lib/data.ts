@@ -37,7 +37,42 @@ export const teams: Team[] = [
 ];
 
 export const volunteers: Volunteer[] = [
-  // This data is now fetched from Firestore.
+  { 
+    id: '1', name: 'Thiago Moura', team: 'Alpha', 
+    areas: ['Coordenação De Culto', 'EKLESIA', 'PROFESSORES', 'SOM'], 
+    availability: ['Culto da Família', 'Culto de Propósitos'],
+    phone: '(21) 98900-1302', email: 'thiago-ddsm@hotmail.com'
+  },
+  { 
+    id: '2', name: 'Ana Carolina', team: 'Bravo', 
+    areas: ['Fotografia', 'Recepção'], 
+    availability: ['Culto da Família', 'Culto da Noite'],
+    phone: '(21) 91234-5678', email: 'ana.carol@example.com'
+  },
+  { 
+    id: '3', name: 'Lucas Santos', team: 'Charlie', 
+    areas: ['Som', 'Projeção'], 
+    availability: ['Culto de Propósitos'],
+    phone: '(21) 98765-4321', email: 'lucas.santos@example.com'
+  },
+  { 
+    id: '4', name: 'Juliana Lima', team: 'Delta', 
+    areas: ['Musikids', 'Bistrô'], 
+    availability: ['Culto da Família'],
+    phone: '(21) 99999-8888', email: 'juliana.lima@example.com'
+  },
+  { 
+    id: '5', name: 'Marcos Paulo', team: 'Alpha', 
+    areas: ['Estacionamento', 'Security'], 
+    availability: ['Culto da Noite'],
+    phone: '(21) 91111-2222', email: 'marcos.paulo@example.com'
+  },
+  { 
+    id: '6', name: 'Beatriz Costa', team: 'N/A', 
+    areas: ['Apoio', 'Cleaning'], 
+    availability: ['Culto Clássico', 'Culto da Tarde'],
+    phone: '(21) 93333-4444', email: 'beatriz.costa@example.com'
+  },
 ];
 
 export const events: Event[] = [

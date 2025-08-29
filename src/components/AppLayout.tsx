@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Blocks, Calendar, LayoutDashboard, Users, Construction, Shield, LogOut, Cog, Bot, UploadCloud } from 'lucide-react';
+import { Blocks, Calendar, LayoutDashboard, Users, Construction, Shield, LogOut, Cog, Bot } from 'lucide-react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger, SidebarInset, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Button } from "@/components/ui/button";
@@ -119,21 +119,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     </SidebarMenuSub>
                 </CollapsibleContent>
                </Collapsible>
-               <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={pathname === '/import'}
-                    tooltip={{
-                      children: "Importar Dados",
-                      className: "bg-primary text-primary-foreground",
-                    }}
-                  >
-                    <Link href="/import">
-                      <UploadCloud />
-                      <span>Importar Dados</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
             </SidebarMenu>
             <SidebarMenu>
               {bottomMenuItems.map((item) => (

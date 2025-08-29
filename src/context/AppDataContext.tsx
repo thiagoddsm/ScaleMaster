@@ -1,10 +1,9 @@
 "use client"
 
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { collection, onSnapshot, doc, addDoc, updateDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 import type { Volunteer, Event, Team, AreaOfService, TeamSchedule, SavedSchedule } from '@/lib/types';
 import { 
+    volunteers as initialVolunteers,
     events as initialEvents,
     teams as initialTeams,
     areasOfService as initialAreas,
@@ -12,7 +11,6 @@ import {
     savedSchedules as initialSavedSchedules
 } from '@/lib/data';
 import { startOfMonth, endOfMonth, eachWeekOfInterval, format, addDays } from 'date-fns';
-import { useAuth } from '@/hooks/use-auth';
 
 interface AppDataContextType {
   volunteers: Volunteer[];
@@ -22,9 +20,9 @@ interface AppDataContextType {
   teamSchedules: TeamSchedule[];
   savedSchedules: SavedSchedule[];
   loading: boolean;
-  addVolunteer: (volunteer: Omit<Volunteer, 'id'>) => Promise<void>;
-  updateVolunteer: (id: string, updatedVolunteer: Partial<Volunteer>) => Promise<void>;
-  deleteVolunteer: (id: string) => Promise<void>;
+  addVolunteer: (volunteer: Omit<Volunteer, 'id' | 'serviceCount'>) => void;
+  updateVolunteer: (id: string, updatedVolunteer: Omit<Volunteer, 'id'>) => void;
+  deleteVolunteer: (id: string) => void;
   setEvents: React.Dispatch<React.SetStateAction<Event[]>>;
   addEvent: (event: Event) => void;
   updateEvent: (id: string, updatedEvent: Event) => void;
@@ -48,78 +46,45 @@ interface AppDataContextType {
 const AppDataContext = createContext<AppDataContextType | undefined>(undefined);
 
 export function AppDataProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
-  const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
+  const [volunteers, setVolunteers] = useState<Volunteer[]>(initialVolunteers);
   const [events, setEvents] = useState<Event[]>(initialEvents);
   const [teams, setTeams] = useState<Team[]>(initialTeams);
   const [areasOfService, setAreasOfService] = useState<AreaOfService[]>(initialAreas);
   const [teamSchedules, setTeamSchedules] = useState<TeamSchedule[]>(initialTeamSchedules);
   const [savedSchedules, setSavedSchedules] = useState<SavedSchedule[]>(initialSavedSchedules);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!user) {
-      setVolunteers([]);
-      setLoading(false);
-      return;
-    }
+  const loading = false; // Since data is local, loading is always false.
 
-    setLoading(true);
-    const volunteersCollection = collection(db, 'volunteers');
-    const q = query(volunteersCollection, orderBy("name"));
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const volunteersData = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Volunteer));
-      setVolunteers(volunteersData);
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching volunteers:", error);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [user]);
-
-
-  // Volunteer Actions
-  const addVolunteer = async (volunteer: Omit<Volunteer, 'id'>) => {
-    try {
-      await addDoc(collection(db, 'volunteers'), volunteer);
-    } catch (e) {
-      console.error("Error adding document: ", e);
-    }
-  };
-  const updateVolunteer = async (id: string, updatedVolunteer: Partial<Volunteer>) => {
-    const volunteerDoc = doc(db, 'volunteers', id);
-    await updateDoc(volunteerDoc, updatedVolunteer);
-  };
-  const deleteVolunteer = async (id: string) => {
-    await deleteDoc(doc(db, 'volunteers', id));
+  const addVolunteer = (volunteer: Omit<Volunteer, 'id' | 'serviceCount'>) => {
+    setVolunteers(prev => [...prev, { ...volunteer, id: crypto.randomUUID(), serviceCount: 0 }].sort((a,b) => a.name.localeCompare(b.name)));
   };
 
+  const updateVolunteer = (id: string, updatedVolunteer: Omit<Volunteer, 'id'>) => {
+    setVolunteers(prev => prev.map(v => v.id === id ? { ...v, ...updatedVolunteer } : v).sort((a,b) => a.name.localeCompare(b.name)));
+  };
 
-  // Event Actions
+  const deleteVolunteer = (id: string) => {
+    setVolunteers(prev => prev.filter(v => v.id !== id));
+  };
+  
   const addEvent = (event: Event) => setEvents(prev => [...prev, event]);
   const updateEvent = (id: string, updatedEvent: Event) => {
     setEvents(prev => prev.map(e => e.id === id ? updatedEvent : e));
   };
   const deleteEvent = (id: string) => setEvents(prev => prev.filter(e => e.id !== id));
 
-  // Team Actions
   const addTeam = (team: Team) => setTeams(prev => [...prev, team].sort((a,b) => a.name.localeCompare(b.name)));
   const updateTeam = (name: string, updatedTeam: Team) => {
     setTeams(prev => prev.map(t => t.name === name ? updatedTeam : t).sort((a,b) => a.name.localeCompare(b.name)));
   };
   const deleteTeam = (name: string) => setTeams(prev => prev.filter(t => t.name !== name));
 
-  // Area Actions
   const addArea = (area: AreaOfService) => setAreasOfService(prev => [...prev, area].sort((a,b) => a.name.localeCompare(b.name)));
   const updateArea = (name: string, updatedArea: AreaOfService) => {
     setAreasOfService(prev => prev.map(a => a.name === name ? updatedArea : a).sort((a,b) => a.name.localeCompare(b.name)));
   };
   const deleteArea = (name: string) => setAreasOfService(prev => prev.filter(a => a.name !== name));
   
-  // Team Schedule Actions
   const generateTeamSchedules = (year: number, month: number, startTeam: string) => {
     const newSchedules: TeamSchedule[] = [];
     const startDate = startOfMonth(new Date(year, month - 1));
@@ -146,18 +111,14 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setTeamSchedules(newSchedules);
   };
   
-  // Saved Schedule Actions
   const saveSchedule = (schedule: SavedSchedule) => {
     setSavedSchedules(prev => {
-        // Find if a schedule for the same month and year already exists
         const existingIndex = prev.findIndex(s => s.year === schedule.year && s.month === schedule.month);
         if (existingIndex > -1) {
-            // If it exists, replace it
             const newSchedules = [...prev];
             newSchedules[existingIndex] = schedule;
             return newSchedules;
         }
-        // Otherwise, add the new schedule
         return [...prev, schedule];
     });
   };
@@ -169,7 +130,6 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const deleteSchedule = (id: string) => {
       setSavedSchedules(prev => prev.filter(s => s.id !== id));
   };
-
 
   const value = {
     volunteers, loading, addVolunteer, updateVolunteer, deleteVolunteer,
