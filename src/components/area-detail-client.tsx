@@ -97,7 +97,10 @@ export default function AreaDetailClient({ area }: { area: AreaOfService }) {
   
   function handleEditVolunteer(volunteer: Volunteer) {
     setVolunteerToEdit(volunteer);
-    form.reset(volunteer);
+    form.reset({
+      ...volunteer,
+      email: volunteer.email || '', // Ensure email is not undefined
+    });
     setIsEditVolunteerDialogOpen(true);
   }
   
