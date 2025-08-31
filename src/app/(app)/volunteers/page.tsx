@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Search, Upload, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -20,6 +20,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAppData } from '@/context/AppDataContext';
 import { Skeleton } from '@/components/ui/skeleton';
+import Papa from 'papaparse';
 
 const volunteerSchema = z.object({
   id: z.string().optional(),
@@ -40,6 +41,7 @@ export default function VolunteersPage() {
   const [teamFilter, setTeamFilter] = useState("all");
   const [areaFilter, setAreaFilter] = useState("all");
   const [availabilityFilter, setAvailabilityFilter] = useState("all");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { toast } = useToast();
 
@@ -124,6 +126,66 @@ export default function VolunteersPage() {
     setSelectedVolunteer(null);
     form.reset();
   }
+  
+  const handleDownloadTemplate = () => {
+    const csvHeader = "name,team,phone,email,areas,availability\n";
+    const blob = new Blob([csvHeader], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'modelo_voluntarios.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+            const volunteersToAdd = results.data.map((row: any) => ({
+                name: row.name || '',
+                team: row.team || 'N/A',
+                phone: row.phone || '',
+                email: row.email || '',
+                areas: row.areas ? row.areas.split(',').map((s:string) => s.trim()) : [],
+                availability: row.availability ? row.availability.split(',').map((s:string) => s.trim()) : [],
+            }));
+
+            volunteersToAdd.forEach(v => {
+                if (v.name) { // Basic validation
+                    addVolunteer(v);
+                }
+            });
+            toast({
+                title: "Importação Concluída!",
+                description: `${volunteersToAdd.length} voluntários foram processados.`
+            });
+        },
+        error: (error) => {
+            toast({
+                variant: 'destructive',
+                title: 'Erro na Importação',
+                description: `Ocorreu um erro ao ler o arquivo: ${error.message}`
+            });
+        }
+    });
+
+    // Reset file input
+    if(event.target) {
+        event.target.value = '';
+    }
+  };
+
 
   const filteredVolunteers = volunteers.filter(volunteer => {
     const nameMatch = volunteer.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -163,11 +225,18 @@ export default function VolunteersPage() {
                           <PlusCircle className="mr-2 h-4 w-4" />
                           Adicionar
                       </Button>
-                      <Button variant="outline">
+                      <Button variant="outline" onClick={handleImportClick}>
                           <Upload className="mr-2 h-4 w-4" />
                           Importar
                       </Button>
-                      <Button variant="outline">
+                       <input
+                        type="file"
+                        ref={fileInputRef}
+                        className="hidden"
+                        accept=".csv"
+                        onChange={handleFileImport}
+                       />
+                      <Button variant="outline" onClick={handleDownloadTemplate}>
                           <Download className="mr-2 h-4 w-4" />
                           Modelo
                       </Button>
