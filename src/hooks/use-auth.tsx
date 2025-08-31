@@ -32,11 +32,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-      router.push('/app/dashboard');
+      // The redirect is now handled by the page component
+      // router.push('/dashboard');
     } catch (error) {
         const authError = error as AuthError;
         // Don't log an error if the user cancels the popup
-        if (authError.code !== 'auth/cancelled-popup-request') {
+        if (authError.code !== 'auth/cancelled-popup-request' && authError.code !== 'auth/popup-closed-by-user') {
              console.error("Error signing in with Google: ", error);
         }
     }
@@ -45,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     try {
       await firebaseSignOut(auth);
-      router.push('/auth/login');
+      router.push('/login');
     } catch (error) {
       console.error("Error signing out: ", error);
     }
