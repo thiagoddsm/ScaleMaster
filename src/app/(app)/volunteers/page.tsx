@@ -70,9 +70,9 @@ export default function VolunteersPage() {
     setIsDeleteDialogOpen(true);
   }
 
-  function confirmDelete() {
+  async function confirmDelete() {
     if (selectedVolunteer) {
-        deleteVolunteer(selectedVolunteer.id);
+        await deleteVolunteer(selectedVolunteer.id);
         toast({
             title: "Sucesso!",
             description: "Voluntário excluído.",
@@ -82,10 +82,10 @@ export default function VolunteersPage() {
     }
   }
 
-  function handleTeamChange(volunteerId: string, newTeam: string) {
+  async function handleTeamChange(volunteerId: string, newTeam: string) {
     const volunteer = volunteers.find(v => v.id === volunteerId);
     if (volunteer) {
-        updateVolunteer(volunteer.id, { ...volunteer, team: newTeam });
+        await updateVolunteer(volunteer.id, { ...volunteer, team: newTeam });
         toast({
             title: "Equipe Atualizada",
             description: `${volunteer.name} agora está na equipe ${newTeam}.`
@@ -94,7 +94,7 @@ export default function VolunteersPage() {
   }
 
 
-  function onSubmit(data: z.infer<typeof volunteerSchema>) {
+  async function onSubmit(data: z.infer<typeof volunteerSchema>) {
     const volunteerData = {
         name: data.name,
         team: data.team,
@@ -106,7 +106,7 @@ export default function VolunteersPage() {
 
     if (selectedVolunteer) {
         // Edit
-        updateVolunteer(selectedVolunteer.id, volunteerData);
+        await updateVolunteer(selectedVolunteer.id, volunteerData);
         toast({
             title: "Sucesso!",
             description: "Voluntário atualizado.",
@@ -114,7 +114,7 @@ export default function VolunteersPage() {
         });
     } else {
         // Add
-        addVolunteer(volunteerData);
+        await addVolunteer(volunteerData);
         toast({
             title: "Sucesso!",
             description: "Novo voluntário adicionado.",
@@ -156,7 +156,7 @@ export default function VolunteersPage() {
     Papa.parse(file, {
         header: true,
         skipEmptyLines: true,
-        complete: (results) => {
+        complete: async (results) => {
             const volunteersToAdd = results.data.map((row: any) => ({
                 name: row.name || '',
                 team: row.team || 'N/A',
@@ -166,15 +166,23 @@ export default function VolunteersPage() {
                 availability: row.availability ? row.availability.split(',').map((s:string) => s.trim()) : [],
             }));
 
-            volunteersToAdd.forEach(v => {
-                if (v.name) { // Basic validation
-                    addVolunteer(v);
-                }
+            try {
+              for (const v of volunteersToAdd) {
+                  if (v.name) { // Basic validation
+                      await addVolunteer(v);
+                  }
+              }
+              toast({
+                  title: "Importação Concluída!",
+                  description: `${volunteersToAdd.length} voluntários foram processados.`
+              });
+            } catch (error) {
+               toast({
+                variant: 'destructive',
+                title: 'Erro na Importação',
+                description: `Ocorreu um erro ao salvar os voluntários.`
             });
-            toast({
-                title: "Importação Concluída!",
-                description: `${volunteersToAdd.length} voluntários foram processados.`
-            });
+            }
         },
         error: (error) => {
             toast({
