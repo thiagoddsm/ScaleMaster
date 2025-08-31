@@ -131,7 +131,7 @@ export default function AreaDetailClient({ area }: { area: AreaOfService }) {
     <div className="space-y-8">
       <div>
         <Button asChild variant="ghost" className="mb-4">
-          <Link href="/app/areas"><ChevronLeft className="mr-2 h-4 w-4" /> Voltar para Áreas</Link>
+          <Link href="/areas"><ChevronLeft className="mr-2 h-4 w-4" /> Voltar para Áreas</Link>
         </Button>
         <h1 className="text-3xl font-bold tracking-tight text-foreground">{area.name}</h1>
         <p className="text-muted-foreground">Gerencie os voluntários desta área de serviço.</p>

@@ -32,8 +32,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-      // The redirect is now handled by the page component
-      // router.push('/dashboard');
     } catch (error) {
         const authError = error as AuthError;
         // Don't log an error if the user cancels the popup

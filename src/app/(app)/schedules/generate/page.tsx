@@ -194,7 +194,7 @@ export default function SchedulePage() {
     scheduleData.sort((a,b) => a.date.localeCompare(b.date));
 
     const finalData: GenerateScheduleOutput = {
-        scaleTable: "Gerado manually",
+        scaleTable: "Gerado manualmente",
         report: {
             fillRate: "",
             volunteerDistribution: "",
@@ -220,7 +220,7 @@ export default function SchedulePage() {
       description: `A escala para ${monthLabel} de ${year} foi salva com sucesso.`,
     });
 
-    router.push('/app/schedules');
+    router.push('/schedules');
   };
 
   return (
