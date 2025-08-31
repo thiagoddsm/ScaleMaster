@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from 'react';
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Search } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Search, Upload, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -19,6 +19,7 @@ import type { Volunteer } from '@/lib/types';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAppData } from '@/context/AppDataContext';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const volunteerSchema = z.object({
   id: z.string().optional(),
@@ -31,7 +32,7 @@ const volunteerSchema = z.object({
 });
 
 export default function VolunteersPage() {
-  const { volunteers, teams, areasOfService, events, updateVolunteer, addVolunteer, deleteVolunteer } = useAppData();
+  const { volunteers, teams, areasOfService, events, updateVolunteer, addVolunteer, deleteVolunteer, loading } = useAppData();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
@@ -82,7 +83,7 @@ export default function VolunteersPage() {
   function handleTeamChange(volunteerId: string, newTeam: string) {
     const volunteer = volunteers.find(v => v.id === volunteerId);
     if (volunteer) {
-        updateVolunteer(volunteerId, { ...volunteer, team: newTeam });
+        updateVolunteer(volunteer.id, { ...volunteer, team: newTeam });
         toast({
             title: "Equipe Atualizada",
             description: `${volunteer.name} agora está na equipe ${newTeam}.`
@@ -92,9 +93,18 @@ export default function VolunteersPage() {
 
 
   function onSubmit(data: z.infer<typeof volunteerSchema>) {
+    const volunteerData = {
+        name: data.name,
+        team: data.team,
+        areas: data.areas,
+        availability: data.availability,
+        phone: data.phone,
+        email: data.email,
+    };
+
     if (selectedVolunteer) {
         // Edit
-        updateVolunteer(selectedVolunteer.id, { ...selectedVolunteer, ...data });
+        updateVolunteer(selectedVolunteer.id, volunteerData);
         toast({
             title: "Sucesso!",
             description: "Voluntário atualizado.",
@@ -102,7 +112,7 @@ export default function VolunteersPage() {
         });
     } else {
         // Add
-        addVolunteer({ ...data, id: `v_${new Date().getTime()}`});
+        addVolunteer(volunteerData);
         toast({
             title: "Sucesso!",
             description: "Novo voluntário adicionado.",
@@ -121,7 +131,7 @@ export default function VolunteersPage() {
     const areaMatch = areaFilter === 'all' || volunteer.areas.includes(areaFilter);
     const availabilityMatch = availabilityFilter === 'all' || volunteer.availability.includes(availabilityFilter);
     return nameMatch && teamMatch && areaMatch && availabilityMatch;
-  }).sort((a, b) => a.name.localeCompare(b.name));
+  });
   
   return (
     <div className="space-y-8">
@@ -148,10 +158,20 @@ export default function VolunteersPage() {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <Button onClick={handleAdd} className="w-full sm:w-auto">
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Adicionar Voluntário
-                    </Button>
+                    <div className="flex w-full sm:w-auto items-center gap-2">
+                      <Button onClick={handleAdd} className="w-full sm:w-auto">
+                          <PlusCircle className="mr-2 h-4 w-4" />
+                          Adicionar
+                      </Button>
+                      <Button variant="outline">
+                          <Upload className="mr-2 h-4 w-4" />
+                          Importar
+                      </Button>
+                      <Button variant="outline">
+                          <Download className="mr-2 h-4 w-4" />
+                          Modelo
+                      </Button>
+                    </div>
                 </div>
             </div>
             <div className="flex flex-col md:flex-row gap-4 mt-4">
@@ -197,7 +217,18 @@ export default function VolunteersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredVolunteers.length > 0 ? filteredVolunteers.map((volunteer) => (
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                    <TableCell className="text-right"><Skeleton className="h-8 w-8" /></TableCell>
+                  </TableRow>
+                ))
+              ) : filteredVolunteers.length > 0 ? filteredVolunteers.map((volunteer) => (
                 <TableRow key={volunteer.id}>
                   <TableCell className="font-medium">{volunteer.name}</TableCell>
                   <TableCell>

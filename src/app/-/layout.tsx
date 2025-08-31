@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const menuItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -43,7 +44,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     return (
         <div className="flex h-screen items-center justify-center">
             <div className="flex items-center space-x-2">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                <Skeleton className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent bg-transparent" />
                 <span className="text-muted-foreground">Carregando...</span>
             </div>
         </div>
@@ -58,7 +59,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <Button variant="ghost" size="icon" className="h-10 w-10 text-primary">
                     <Blocks className="h-6 w-6" />
                 </Button>
-                <h1 className="text-xl font-semibold text-primary-foreground/90">ScaleMaster</h1>
+                <h1 className="text-xl font-semibold text-sidebar-foreground/90">ScaleMaster</h1>
             </div>
         </SidebarHeader>
         <SidebarContent className="flex flex-col justify-between">

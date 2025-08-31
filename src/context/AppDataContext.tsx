@@ -58,31 +58,32 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) {
-      setVolunteers([]);
-      setLoading(false);
-      return;
+    if (user) {
+      setLoading(true);
+      const volunteersCollection = collection(db, 'volunteers');
+      const q = query(volunteersCollection, orderBy("name"));
+
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const volunteersData = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Volunteer));
+        setVolunteers(volunteersData);
+        setLoading(false);
+      }, (error) => {
+        console.error("Error fetching volunteers:", error);
+        setLoading(false);
+      });
+
+      return () => unsubscribe();
+    } else {
+        // If no user, clear the volunteers and stop loading.
+        setVolunteers([]);
+        setLoading(false);
     }
-
-    setLoading(true);
-    const volunteersCollection = collection(db, 'volunteers');
-    const q = query(volunteersCollection, orderBy("name"));
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const volunteersData = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Volunteer));
-      setVolunteers(volunteersData);
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching volunteers:", error);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
   }, [user]);
 
 
   // Volunteer Actions
   const addVolunteer = async (volunteer: Omit<Volunteer, 'id'>) => {
+    if(!user) return;
     try {
       await addDoc(collection(db, 'volunteers'), volunteer);
     } catch (e) {
@@ -90,10 +91,12 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     }
   };
   const updateVolunteer = async (id: string, updatedVolunteer: Partial<Volunteer>) => {
+    if(!user) return;
     const volunteerDoc = doc(db, 'volunteers', id);
     await updateDoc(volunteerDoc, updatedVolunteer);
   };
   const deleteVolunteer = async (id: string) => {
+    if(!user) return;
     await deleteDoc(doc(db, 'volunteers', id));
   };
 
