@@ -128,8 +128,13 @@ export default function VolunteersPage() {
   }
   
   const handleDownloadTemplate = () => {
-    const csvHeader = "name,team,phone,email,areas,availability\n";
-    const blob = new Blob([csvHeader], { type: 'text/csv;charset=utf-8;' });
+    const csvHeader = "name,team,phone,email,areas,availability";
+    const allAvailabilities = availabilityItems.join(',');
+    const exampleVolunteer = `Voluntário Exemplo,${teams[0]?.name || 'Alpha'},(99) 99999-9999,exemplo@email.com,${areasOfService[0]?.name || 'Apoio'},"${allAvailabilities}"`;
+
+    const csvContent = `${csvHeader}\n${exampleVolunteer}`;
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
