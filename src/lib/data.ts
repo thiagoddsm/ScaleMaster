@@ -2,7 +2,8 @@ import type { Volunteer, Event, Team, TeamSchedule, AreaOfService, UserPermissio
 
 export const adminUserEmail = "thiagoddsm@gmail.com";
 
-export const areasOfService: AreaOfService[] = [
+// This is now initial seed data. The source of truth is Firestore.
+export const areasOfService: Omit<AreaOfService, 'id'>[] = [
     { name: "Apoio" },
     { name: "Bistrô" },
     { name: "Boutique" },
@@ -29,7 +30,8 @@ export const areasOfService: AreaOfService[] = [
     { name: "Stories" },
 ].sort((a, b) => a.name.localeCompare(b.name));
 
-export const teams: Team[] = [
+// This is now initial seed data. The source of truth is Firestore.
+export const teams: Omit<Team, 'id'>[] = [
   { name: 'Alpha' },
   { name: "Bravo" },
   { name: "Charlie" },

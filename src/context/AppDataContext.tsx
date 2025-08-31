@@ -1,7 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { collection, onSnapshot, doc, addDoc, updateDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, doc, addDoc, updateDoc, deleteDoc, query, orderBy, getDocs, writeBatch, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Volunteer, Event, Team, AreaOfService, TeamSchedule, SavedSchedule } from '@/lib/types';
 import { 
@@ -29,14 +29,12 @@ interface AppDataContextType {
   addEvent: (event: Event) => void;
   updateEvent: (id: string, updatedEvent: Event) => void;
   deleteEvent: (id: string) => void;
-  setTeams: React.Dispatch<React.SetStateAction<Team[]>>;
-  addTeam: (team: Team) => void;
-  updateTeam: (name: string, updatedTeam: Team) => void;
-  deleteTeam: (name: string) => void;
-  setAreasOfService: React.Dispatch<React.SetStateAction<AreaOfService[]>>;
-  addArea: (area: AreaOfService) => void;
-  updateArea: (name: string, updatedArea: AreaOfService) => void;
-  deleteArea: (name: string) => void;
+  addTeam: (team: Omit<Team, 'id'>) => Promise<void>;
+  updateTeam: (id: string, updatedTeam: Partial<Team>) => Promise<void>;
+  deleteTeam: (id: string) => Promise<void>;
+  addArea: (area: Omit<AreaOfService, 'id'>) => Promise<void>;
+  updateArea: (id: string, updatedArea: Partial<AreaOfService>) => Promise<void>;
+  deleteArea: (id: string) => Promise<void>;
   setTeamSchedules: React.Dispatch<React.SetStateAction<TeamSchedule[]>>;
   generateTeamSchedules: (year: number, month: number, startTeam: string) => void;
   setSavedSchedules: React.Dispatch<React.SetStateAction<SavedSchedule[]>>;
@@ -51,31 +49,76 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
   const [events, setEvents] = useState<Event[]>(initialEvents);
-  const [teams, setTeams] = useState<Team[]>(initialTeams);
-  const [areasOfService, setAreasOfService] = useState<AreaOfService[]>(initialAreas);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [areasOfService, setAreasOfService] = useState<AreaOfService[]>([]);
   const [teamSchedules, setTeamSchedules] = useState<TeamSchedule[]>(initialTeamSchedules);
   const [savedSchedules, setSavedSchedules] = useState<SavedSchedule[]>(initialSavedSchedules);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
-      setLoading(true);
-      const volunteersCollection = collection(db, 'volunteers');
-      const q = query(volunteersCollection, orderBy("name"));
+        const fetchData = async () => {
+            setLoading(true);
+            
+            const collections = {
+                volunteers: query(collection(db, 'volunteers'), orderBy("name")),
+                teams: query(collection(db, 'teams'), orderBy("name")),
+                areasOfService: query(collection(db, 'areasOfService'), orderBy("name")),
+            };
 
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        const volunteersData = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Volunteer));
-        setVolunteers(volunteersData);
-        setLoading(false);
-      }, (error) => {
-        console.error("Error fetching volunteers:", error);
-        setLoading(false);
-      });
+            const unsubscribeVolunteers = onSnapshot(collections.volunteers, (snapshot) => {
+                const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Volunteer));
+                setVolunteers(data);
+            }, (error) => console.error("Error fetching volunteers:", error));
 
-      return () => unsubscribe();
+            const unsubscribeTeams = onSnapshot(collections.teams, (snapshot) => {
+                const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Team));
+                setTeams(data);
+            }, (error) => console.error("Error fetching teams:", error));
+            
+            const unsubscribeAreas = onSnapshot(collections.areasOfService, (snapshot) => {
+                const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as AreaOfService));
+                setAreasOfService(data);
+            }, (error) => console.error("Error fetching areas:", error));
+
+
+            // Initial data seeding if collections are empty
+            const teamDocs = await getDocs(collections.teams);
+            if (teamDocs.empty) {
+                const batch = writeBatch(db);
+                initialTeams.forEach(team => {
+                    const docRef = doc(collection(db, 'teams'));
+                    batch.set(docRef, team);
+                });
+                await batch.commit();
+            }
+
+            const areaDocs = await getDocs(collections.areasOfService);
+            if (areaDocs.empty) {
+                 const batch = writeBatch(db);
+                initialAreas.forEach(area => {
+                    const docRef = doc(collection(db, 'areasOfService'));
+                    batch.set(docRef, area);
+                });
+                await batch.commit();
+            }
+
+            setLoading(false);
+
+            return () => {
+                unsubscribeVolunteers();
+                unsubscribeTeams();
+                unsubscribeAreas();
+            };
+        }
+        
+        fetchData();
+
     } else {
-        // If no user, clear the volunteers and stop loading.
+        // If no user, clear data and stop loading.
         setVolunteers([]);
+        setTeams([]);
+        setAreasOfService([]);
         setLoading(false);
     }
   }, [user]);
@@ -84,16 +127,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   // Volunteer Actions
   const addVolunteer = async (volunteer: Omit<Volunteer, 'id'>) => {
     if(!user) return;
-    try {
-      await addDoc(collection(db, 'volunteers'), volunteer);
-    } catch (e) {
-      console.error("Error adding document: ", e);
-    }
+    await addDoc(collection(db, 'volunteers'), volunteer);
   };
   const updateVolunteer = async (id: string, updatedVolunteer: Partial<Volunteer>) => {
     if(!user) return;
-    const volunteerDoc = doc(db, 'volunteers', id);
-    await updateDoc(volunteerDoc, updatedVolunteer);
+    await updateDoc(doc(db, 'volunteers', id), updatedVolunteer);
   };
   const deleteVolunteer = async (id: string) => {
     if(!user) return;
@@ -101,29 +139,54 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   };
 
 
-  // Event Actions
+  // Event Actions (still in-memory for now)
   const addEvent = (event: Event) => setEvents(prev => [...prev, event]);
   const updateEvent = (id: string, updatedEvent: Event) => {
     setEvents(prev => prev.map(e => e.id === id ? updatedEvent : e));
   };
   const deleteEvent = (id: string) => setEvents(prev => prev.filter(e => e.id !== id));
 
-  // Team Actions
-  const addTeam = (team: Team) => setTeams(prev => [...prev, team].sort((a,b) => a.name.localeCompare(b.name)));
-  const updateTeam = (name: string, updatedTeam: Team) => {
-    setTeams(prev => prev.map(t => t.name === name ? updatedTeam : t).sort((a,b) => a.name.localeCompare(b.name)));
+  // Team Actions (Firestore)
+  const addTeam = async (team: Omit<Team, 'id'>) => {
+    if(!user) return;
+    const existingQuery = query(collection(db, 'teams'), where('name', '==', team.name));
+    const existingDocs = await getDocs(existingQuery);
+    if (!existingDocs.empty) {
+        throw new Error("Uma equipe com este nome já existe.");
+    }
+    await addDoc(collection(db, 'teams'), team);
   };
-  const deleteTeam = (name: string) => setTeams(prev => prev.filter(t => t.name !== name));
+  const updateTeam = async (id: string, updatedTeam: Partial<Team>) => {
+    if(!user) return;
+    await updateDoc(doc(db, 'teams', id), updatedTeam);
+  };
+  const deleteTeam = async (id: string) => {
+    if(!user) return;
+    await deleteDoc(doc(db, 'teams', id));
+  };
 
-  // Area Actions
-  const addArea = (area: AreaOfService) => setAreasOfService(prev => [...prev, area].sort((a,b) => a.name.localeCompare(b.name)));
-  const updateArea = (name: string, updatedArea: AreaOfService) => {
-    setAreasOfService(prev => prev.map(a => a.name === name ? updatedArea : a).sort((a,b) => a.name.localeCompare(b.name)));
+  // Area Actions (Firestore)
+  const addArea = async (area: Omit<AreaOfService, 'id'>) => {
+    if(!user) return;
+     const existingQuery = query(collection(db, 'areasOfService'), where('name', '==', area.name));
+    const existingDocs = await getDocs(existingQuery);
+    if (!existingDocs.empty) {
+        throw new Error("Uma área de serviço com este nome já existe.");
+    }
+    await addDoc(collection(db, 'areasOfService'), area);
   };
-  const deleteArea = (name: string) => setAreasOfService(prev => prev.filter(a => a.name !== name));
+  const updateArea = async (id: string, updatedArea: Partial<AreaOfService>) => {
+    if(!user) return;
+    await updateDoc(doc(db, 'areasOfService', id), updatedArea);
+  };
+  const deleteArea = async (id: string) => {
+    if(!user) return;
+    await deleteDoc(doc(db, 'areasOfService', id));
+  };
   
   // Team Schedule Actions
   const generateTeamSchedules = (year: number, month: number, startTeam: string) => {
+    if (teams.length === 0) return; // Don't generate if there are no teams
     const newSchedules: TeamSchedule[] = [];
     const startDate = startOfMonth(new Date(year, month - 1));
     const endDate = endOfMonth(new Date(year, month - 1));
@@ -177,8 +240,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const value = {
     volunteers, loading, addVolunteer, updateVolunteer, deleteVolunteer,
     events, setEvents, addEvent, updateEvent, deleteEvent,
-    teams, setTeams, addTeam, updateTeam, deleteTeam,
-    areasOfService, setAreasOfService, addArea, updateArea, deleteArea,
+    teams, addTeam, updateTeam, deleteTeam,
+    areasOfService, addArea, updateArea, deleteArea,
     teamSchedules, setTeamSchedules, generateTeamSchedules,
     savedSchedules, setSavedSchedules, saveSchedule, updateSavedSchedule, deleteSchedule,
   };

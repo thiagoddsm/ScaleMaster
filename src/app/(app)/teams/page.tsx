@@ -51,43 +51,56 @@ export default function TeamsPage() {
     setIsDeleteDialogOpen(true);
   }
 
-  function confirmDelete() {
+  async function confirmDelete() {
     if (selectedTeam) {
-      deleteTeam(selectedTeam.name);
-      toast({
-        title: "Sucesso!",
-        description: "Equipe excluída.",
-      });
-      setIsDeleteDialogOpen(false);
-      setSelectedTeam(null);
+      try {
+        await deleteTeam(selectedTeam.id);
+        toast({
+          title: "Sucesso!",
+          description: "Equipe excluída.",
+        });
+      } catch (error: any) {
+         toast({
+          variant: "destructive",
+          title: "Erro ao excluir",
+          description: error.message,
+        });
+      } finally {
+        setIsDeleteDialogOpen(false);
+        setSelectedTeam(null);
+      }
     }
   }
 
-  function onSubmit(data: z.infer<typeof teamSchema>) {
-    if (selectedTeam) {
-      // Edit
-      updateTeam(selectedTeam.name, data);
-       toast({
-        title: "Sucesso!",
-        description: "Equipe atualizada.",
-        className: "bg-primary text-primary-foreground",
-      });
-    } else {
-      // Add
-      if (teams.find(t => t.name.toLowerCase() === data.name.toLowerCase())) {
-        form.setError("name", { type: "manual", message: "Essa equipe já existe." });
-        return;
+  async function onSubmit(data: z.infer<typeof teamSchema>) {
+    try {
+      if (selectedTeam) {
+        // Edit
+        await updateTeam(selectedTeam.id, data);
+         toast({
+          title: "Sucesso!",
+          description: "Equipe atualizada.",
+          className: "bg-primary text-primary-foreground",
+        });
+      } else {
+        // Add
+        await addTeam(data);
+         toast({
+          title: "Sucesso!",
+          description: "Nova equipe adicionada.",
+          className: "bg-primary text-primary-foreground",
+        });
       }
-      addTeam(data);
-       toast({
-        title: "Sucesso!",
-        description: "Nova equipe adicionada.",
-        className: "bg-primary text-primary-foreground",
+      setIsDialogOpen(false);
+      setSelectedTeam(null);
+      form.reset();
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao salvar",
+        description: error.message,
       });
     }
-    setIsDialogOpen(false);
-    setSelectedTeam(null);
-    form.reset();
   }
 
   return (
@@ -119,7 +132,7 @@ export default function TeamsPage() {
               </TableHeader>
               <TableBody>
                 {teams.map((team) => (
-                  <TableRow key={team.name}>
+                  <TableRow key={team.id}>
                     <TableCell className="font-medium">
                         {team.name}
                     </TableCell>

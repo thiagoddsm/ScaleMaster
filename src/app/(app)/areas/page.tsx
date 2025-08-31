@@ -54,43 +54,56 @@ export default function AreasPage() {
     setIsDeleteDialogOpen(true);
   }
 
-  function confirmDelete() {
+  async function confirmDelete() {
     if (selectedArea) {
-      deleteArea(selectedArea.name);
-      toast({
-        title: "Sucesso!",
-        description: "Área de serviço excluída.",
-      });
-      setIsDeleteDialogOpen(false);
-      setSelectedArea(null);
+      try {
+        await deleteArea(selectedArea.id);
+        toast({
+          title: "Sucesso!",
+          description: "Área de serviço excluída.",
+        });
+      } catch (error: any) {
+         toast({
+          variant: "destructive",
+          title: "Erro ao excluir",
+          description: error.message,
+        });
+      } finally {
+        setIsDeleteDialogOpen(false);
+        setSelectedArea(null);
+      }
     }
   }
 
-  function onSubmit(data: z.infer<typeof areaSchema>) {
-    if (selectedArea) {
-      // Edit
-      updateArea(selectedArea.name, data);
-       toast({
-        title: "Sucesso!",
-        description: "Área de serviço atualizada.",
-        className: "bg-primary text-primary-foreground",
-      });
-    } else {
-      // Add
-      if (areasOfService.find(a => a.name.toLowerCase() === data.name.toLowerCase())) {
-        form.setError("name", { type: "manual", message: "Essa área de serviço já existe." });
-        return;
+  async function onSubmit(data: z.infer<typeof areaSchema>) {
+    try {
+      if (selectedArea) {
+        // Edit
+        await updateArea(selectedArea.id, data);
+         toast({
+          title: "Sucesso!",
+          description: "Área de serviço atualizada.",
+          className: "bg-primary text-primary-foreground",
+        });
+      } else {
+        // Add
+        await addArea(data);
+         toast({
+          title: "Sucesso!",
+          description: "Nova área de serviço adicionada.",
+          className: "bg-primary text-primary-foreground",
+        });
       }
-      addArea(data);
+      setIsDialogOpen(false);
+      setSelectedArea(null);
+      form.reset();
+    } catch (error: any) {
        toast({
-        title: "Sucesso!",
-        description: "Nova área de serviço adicionada.",
-        className: "bg-primary text-primary-foreground",
+        variant: "destructive",
+        title: "Erro ao salvar",
+        description: error.message,
       });
     }
-    setIsDialogOpen(false);
-    setSelectedArea(null);
-    form.reset();
   }
 
   return (
@@ -124,7 +137,7 @@ export default function AreasPage() {
               </TableHeader>
               <TableBody>
                 {areasOfService.map((area) => (
-                  <TableRow key={area.name} className="group cursor-pointer">
+                  <TableRow key={area.id} className="group cursor-pointer">
                     <TableCell className="font-medium">
                       <Link href={`/areas/${encodeURIComponent(area.name)}`} className="flex items-center gap-2 hover:underline">
                         {area.name}

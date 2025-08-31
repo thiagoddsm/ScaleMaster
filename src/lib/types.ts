@@ -29,6 +29,7 @@ export type Event = {
 };
 
 export type Team = {
+  id: string;
   name: string;
 };
 
@@ -39,6 +40,7 @@ export type TeamSchedule = {
 };
 
 export type AreaOfService = {
+  id: string;
   name: string;
   leader?: string;
   leaderPhone?: string;
