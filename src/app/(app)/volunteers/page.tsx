@@ -157,30 +157,44 @@ export default function VolunteersPage() {
         header: true,
         skipEmptyLines: true,
         complete: async (results) => {
-            const volunteersToAdd = results.data.map((row: any) => ({
-                name: row.name || '',
-                team: row.team || 'N/A',
-                phone: row.phone || '',
-                email: row.email || '',
+            const existingVolunteerNames = new Set(volunteers.map(v => v.name.toLowerCase()));
+            let newVolunteersCount = 0;
+            
+            const parsedVolunteers = results.data.map((row: any) => ({
+                name: row.name?.trim() || '',
+                team: row.team?.trim() || 'N/A',
+                phone: row.phone?.trim() || '',
+                email: row.email?.trim() || '',
                 areas: row.areas ? row.areas.split(',').map((s:string) => s.trim()) : [],
                 availability: row.availability ? row.availability.split(',').map((s:string) => s.trim()) : [],
             }));
+            
+            const volunteersToAdd = parsedVolunteers.filter(v => 
+                v.name && !existingVolunteerNames.has(v.name.toLowerCase())
+            );
+
+            if (volunteersToAdd.length === 0) {
+                 toast({
+                    title: "Nenhum novo voluntário",
+                    description: "Todos os voluntários no arquivo já existem no sistema."
+                });
+                return;
+            }
 
             try {
               for (const v of volunteersToAdd) {
-                  if (v.name) { // Basic validation
-                      await addVolunteer(v);
-                  }
+                  await addVolunteer(v);
+                  newVolunteersCount++;
               }
               toast({
                   title: "Importação Concluída!",
-                  description: `${volunteersToAdd.length} voluntários foram processados.`
+                  description: `${newVolunteersCount} novos voluntários foram adicionados. ${parsedVolunteers.length - newVolunteersCount} já existiam.`
               });
-            } catch (error) {
+            } catch (error: any) {
                toast({
                 variant: 'destructive',
                 title: 'Erro na Importação',
-                description: `Ocorreu um erro ao salvar os voluntários.`
+                description: `Ocorreu um erro ao salvar os voluntários: ${error.message}`
             });
             }
         },

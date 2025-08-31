@@ -57,62 +57,54 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (user) {
-        const fetchData = async () => {
-            setLoading(true);
-            
-            const collections = {
-                volunteers: query(collection(db, 'volunteers'), orderBy("name")),
-                teams: query(collection(db, 'teams'), orderBy("name")),
-                areasOfService: query(collection(db, 'areasOfService'), orderBy("name")),
-            };
+        setLoading(true);
+        
+        const volunteerQuery = query(collection(db, 'volunteers'), orderBy("name"));
+        const teamsQuery = query(collection(db, 'teams'), orderBy("name"));
+        const areasQuery = query(collection(db, 'areasOfService'), orderBy("name"));
 
-            const unsubscribeVolunteers = onSnapshot(collections.volunteers, (snapshot) => {
-                const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Volunteer));
-                setVolunteers(data);
-            }, (error) => console.error("Error fetching volunteers:", error));
+        const unsubscribeVolunteers = onSnapshot(volunteerQuery, (snapshot) => {
+            setVolunteers(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Volunteer)));
+            setLoading(false); // Set loading to false after initial volunteer fetch
+        }, (error) => {
+            console.error("Error fetching volunteers:", error);
+            setLoading(false);
+        });
 
-            const unsubscribeTeams = onSnapshot(collections.teams, (snapshot) => {
-                const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Team));
-                setTeams(data);
-            }, (error) => console.error("Error fetching teams:", error));
-            
-            const unsubscribeAreas = onSnapshot(collections.areasOfService, (snapshot) => {
-                const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as AreaOfService));
-                setAreasOfService(data);
-            }, (error) => console.error("Error fetching areas:", error));
-
-
-            // Initial data seeding if collections are empty
-            const teamDocs = await getDocs(collections.teams);
-            if (teamDocs.empty) {
-                const batch = writeBatch(db);
+        const unsubscribeTeams = onSnapshot(teamsQuery, (snapshot) => {
+            const teamsData = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Team));
+            if (teamsData.length === 0) {
+                 const batch = writeBatch(db);
                 initialTeams.forEach(team => {
                     const docRef = doc(collection(db, 'teams'));
                     batch.set(docRef, team);
                 });
-                await batch.commit();
+                batch.commit();
+            } else {
+                setTeams(teamsData);
             }
-
-            const areaDocs = await getDocs(collections.areasOfService);
-            if (areaDocs.empty) {
+        }, (error) => console.error("Error fetching teams:", error));
+        
+        const unsubscribeAreas = onSnapshot(areasQuery, (snapshot) => {
+            const areasData = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as AreaOfService));
+            if (areasData.length === 0) {
                  const batch = writeBatch(db);
                 initialAreas.forEach(area => {
                     const docRef = doc(collection(db, 'areasOfService'));
                     batch.set(docRef, area);
                 });
-                await batch.commit();
+                batch.commit();
+            } else {
+                 setAreasOfService(areasData);
             }
+        }, (error) => console.error("Error fetching areas:", error));
 
-            setLoading(false);
 
-            return () => {
-                unsubscribeVolunteers();
-                unsubscribeTeams();
-                unsubscribeAreas();
-            };
-        }
-        
-        fetchData();
+        return () => {
+            unsubscribeVolunteers();
+            unsubscribeTeams();
+            unsubscribeAreas();
+        };
 
     } else {
         // If no user, clear data and stop loading.
@@ -125,8 +117,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
 
   // Volunteer Actions
-  const addVolunteer = async (volunteer: Omit<Volunteer, 'id'>) => {
-    if(!user) return;
+  const addVolunteer = async (volunteer: Omit<Volunteer, 'id'>): Promise<void> => {
+    if(!user) throw new Error("User not authenticated");
     await addDoc(collection(db, 'volunteers'), volunteer);
   };
   const updateVolunteer = async (id: string, updatedVolunteer: Partial<Volunteer>) => {
@@ -147,8 +139,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const deleteEvent = (id: string) => setEvents(prev => prev.filter(e => e.id !== id));
 
   // Team Actions (Firestore)
-  const addTeam = async (team: Omit<Team, 'id'>) => {
-    if(!user) return;
+  const addTeam = async (team: Omit<Team, 'id'>): Promise<void> => {
+    if(!user) throw new Error("User not authenticated");
     const existingQuery = query(collection(db, 'teams'), where('name', '==', team.name));
     const existingDocs = await getDocs(existingQuery);
     if (!existingDocs.empty) {
@@ -166,8 +158,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   };
 
   // Area Actions (Firestore)
-  const addArea = async (area: Omit<AreaOfService, 'id'>) => {
-    if(!user) return;
+  const addArea = async (area: Omit<AreaOfService, 'id'>): Promise<void> => {
+    if(!user) throw new Error("User not authenticated");
      const existingQuery = query(collection(db, 'areasOfService'), where('name', '==', area.name));
     const existingDocs = await getDocs(existingQuery);
     if (!existingDocs.empty) {
